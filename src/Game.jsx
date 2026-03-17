@@ -56,10 +56,6 @@ const ART = {
   jcounter: "/assets/cards/counter.jpeg",
 };
 
-/* ── API config — set VITE_ANTHROPIC_API_KEY in .env ───────────────────── */
-const API_BASE = "/anthropic";
-const API_KEY  = import.meta.env.VITE_ANTHROPIC_API_KEY ?? "";
-
 /* ── Constants ──────────────────────────────────────────────────────────── */
 const MHP = { you:100, alex:100, e1:100, e2:100 };
 
@@ -985,7 +981,7 @@ export default function App(){
   const alexSpeak=async(eventType,g)=>{
     const now=Date.now();
     const forceSpeak=["trade_offer","victory","defeat","trade_accepted","trade_declined","ally_down","revived"].includes(eventType);
-    if(!forceSpeak&&now-lastAlexSpeakRef.current<8000)return;
+    if(!forceSpeak&&now-lastAlexSpeakRef.current<14000)return;
     lastAlexSpeakRef.current=now;
     const persona=allyPersona;
     const nick=allyNick;
@@ -1219,11 +1215,12 @@ export default function App(){
     else if(g.you.hp<=0&&g.alex.hp<=0){setWinner("enemy");setPhase("over");setTimeout(()=>alexSpeak("defeat",g),300);}
     else if(g.alex.hp<=0){setTimeout(()=>alexSpeak("ally_down",g),300);setTurn(t=>t+1);setOd(cl(2+nb-drawCooldown,1,4));setOdBank(0);setPhase(pendingDrawCard?"overflow":"player");}
     else{setTurn(t=>t+1);setOd(cl(2+nb-drawCooldown,1,4));setOdBank(0);setPhase(pendingDrawCard?"overflow":"player");}
+    {const trim=(s,p)=>s&&s.startsWith(p)?s.slice(p.length).trim():s;
     setLastActions({
-      e1:logs.filter(l=>l.startsWith(en("e1"))||l.startsWith("💥 ВРАГИ")).slice(-1)[0]??"",
-      e2:logs.filter(l=>l.startsWith(en("e2"))).slice(-1)[0]??"",
-      alex:logs.filter(l=>l.startsWith("Союзник")).slice(-1)[0]??"",
-    });
+      e1:trim(logs.filter(l=>l.startsWith(en("e1"))||l.startsWith("💥 ВРАГИ")).slice(-1)[0]??"",en("e1")),
+      e2:trim(logs.filter(l=>l.startsWith(en("e2"))).slice(-1)[0]??"",en("e2")),
+      alex:trim(logs.filter(l=>l.startsWith("Союзник")).slice(-1)[0]??"","Союзник"),
+    });}
     setLoad(false);
   };
 
@@ -1339,12 +1336,14 @@ export default function App(){
     setGs(g);addLog(`── Ход ${turn} завершён ──`);logs.forEach(addLog);
     setOd(cl(2+nob-drawCooldown,1,4));setOdBank(0);setDrawCooldown(0);
     setE1Hand(newE1h);setE2Hand(newE2h);setAlexHand(newAlexH);
-    // Situational alexSpeak (non-blocking)
-    {const enemyLow=["e1","e2"].some(k=>g[k].hp>0&&g[k].hp<MHP[k]*0.3);
-    const heavyHit=(eh.you??0)>=15;
-    if(heavyHit)setTimeout(()=>alexSpeak("took_heavy_hit",g),500);
-    else if(g.you.hp<MHP.you*0.25||g.alex.hp<MHP.alex*0.25)setTimeout(()=>alexSpeak("low_hp",g),500);
-    else if(enemyLow)setTimeout(()=>alexSpeak("enemy_low_hp",g),500);}
+    // Situational alexSpeak (non-blocking, 55% chance to avoid every-turn spam)
+    if(Math.random()<0.55){
+      const enemyLow=["e1","e2"].some(k=>g[k].hp>0&&g[k].hp<MHP[k]*0.3);
+      const heavyHit=(eh.you??0)>=15;
+      if(heavyHit)setTimeout(()=>alexSpeak("took_heavy_hit",g),500);
+      else if(g.you.hp<MHP.you*0.25||g.alex.hp<MHP.alex*0.25)setTimeout(()=>alexSpeak("low_hp",g),500);
+      else if(enemyLow)setTimeout(()=>alexSpeak("enemy_low_hp",g),500);
+    }
     // Trade offer (30% chance)
     if(newAlexH.length>0&&!tradeOffer&&Math.random()<0.3){
       const oi=rnd(newAlexH.length);setTradeOffer({type:newAlexH[oi],idx:oi});
@@ -1361,11 +1360,12 @@ export default function App(){
     else if(g.you.hp<=0&&g.alex.hp<=0){setWinner("enemy");setPhase("over");setTimeout(()=>alexSpeak("defeat",g),300);}
     else if(g.alex.hp<=0){setTimeout(()=>alexSpeak("ally_down",g),300);setTurn(t=>t+1);setTradeUsed(false);setPhase(pendingDrawCard?"overflow":"player");}
     else{setTurn(t=>t+1);setTradeUsed(false);setPhase(pendingDrawCard?"overflow":"player");}
+    {const trim=(s,p)=>s&&s.startsWith(p)?s.slice(p.length).trim():s;
     setLastActions({
-      e1:logs.filter(l=>l.startsWith(en("e1"))||l.startsWith("💥 ВРАГИ")).slice(-1)[0]??"",
-      e2:logs.filter(l=>l.startsWith(en("e2"))).slice(-1)[0]??"",
-      alex:logs.filter(l=>l.startsWith("Союзник")).slice(-1)[0]??"",
-    });
+      e1:trim(logs.filter(l=>l.startsWith(en("e1"))||l.startsWith("💥 ВРАГИ")).slice(-1)[0]??"",en("e1")),
+      e2:trim(logs.filter(l=>l.startsWith(en("e2"))).slice(-1)[0]??"",en("e2")),
+      alex:trim(logs.filter(l=>l.startsWith("Союзник")).slice(-1)[0]??"","Союзник"),
+    });}
     setLoad(false);
   };
 
@@ -1484,7 +1484,7 @@ export default function App(){
                 minWidth:140,textAlign:"right",height:16,overflow:"hidden",
                 color:phase==="player"?"#4caf82":phase==="busy"?"#e09a3c":"#e05252",
                 animation:phase==="busy"?"pulse 1s infinite":undefined}}>
-                {phase==="mulligan"?"🃏 ЖРЕБИЙ":phase==="player"?"▶ ТВОЙ ХОД":phase==="busy"?"⏳ ДЕРЖИМ СТРОЙ...":phase==="overflow"?"🃏 ПОЛНАЯ СУМА":"■ КОНЕЦ"}
+                {phase==="mulligan"?"🃏 РАЗДАЧА":phase==="player"?"▶ ТВОЙ ХОД":phase==="busy"?"⏳ ХОД ВРАГОВ...":phase==="overflow"?"🃏 РУКА ПОЛНА":"■ КОНЕЦ"}
               </div>
               <div style={{fontSize:8,color:"#3a2808",fontFamily:"Georgia,serif"}}>
                 {phase==="player"?"Выбирай карты и завершай ход":phase==="busy"?"Союзник и враги делают ходы":phase==="mulligan"?"Можно заменить до 2 карт":""}
@@ -1746,7 +1746,7 @@ export default function App(){
           </div>
           {phase==="player"&&!loading&&(
             <div style={{fontSize:9,color:"#3a2808",marginTop:8,textAlign:"center",fontFamily:"Georgia,serif"}}>
-              💡 Нажми на грамоту, дабы выбрать действие
+              💡 Нажми на карту, чтобы выбрать действие
             </div>)}
         </div>
 
@@ -1951,9 +1951,9 @@ export default function App(){
             border:"1px solid rgba(200,160,80,0.3)",borderRadius:16,padding:"36px 48px",textAlign:"center",
             boxShadow:"0 0 60px rgba(200,120,20,0.3)",maxWidth:820}}>
             <div style={{fontSize:22,fontWeight:900,letterSpacing:4,fontFamily:"Georgia,serif",
-              color:"#c8901c",marginBottom:6}}>ЖРЕБИЙ БРОШЕН</div>
+              color:"#c8901c",marginBottom:6}}>СТАРТОВАЯ РУКА</div>
             <div style={{fontSize:12,color:"#6a5030",marginBottom:22,fontFamily:"Georgia,serif"}}>
-              Выбери до двух грамот для замены — иль ступай с тем, что есть
+              Выбери до 2 карт для замены — или оставь руку как есть
             </div>
             <div style={{display:"flex",gap:14,justifyContent:"center",marginBottom:18,flexWrap:"wrap"}}>
               {hand.map(card=>{
@@ -1985,11 +1985,10 @@ export default function App(){
               setHand([...kept,...replacements]);
               setSharedDeck(d2);setFatigueCycle(c2);
               setMulliganMarked(new Set());setPhase("player");
-              addChat("alex","Бой начат! Удачи.");
             }} style={{background:"linear-gradient(135deg,#7a4008,#c87820)",color:"#fff",
               border:"none",borderRadius:8,padding:"14px 44px",fontSize:13,fontWeight:700,letterSpacing:2,
               cursor:"pointer",fontFamily:"Georgia,serif",boxShadow:"0 0 30px rgba(200,120,20,0.4)"}}>
-              В СЕЧУ ▶
+              В БОЙ ▶
             </button>
           </div>
         </div>)}
@@ -2002,9 +2001,9 @@ export default function App(){
             border:"1px solid rgba(200,160,80,0.3)",borderRadius:16,padding:"36px 48px",textAlign:"center",
             boxShadow:"0 0 50px rgba(200,120,20,0.3)",maxWidth:640}}>
             <div style={{fontSize:18,fontWeight:900,letterSpacing:3,fontFamily:"Georgia,serif",
-              color:"#e09a3c",marginBottom:8}}>СУМА ПОЛНА</div>
+              color:"#e09a3c",marginBottom:8}}>РУКА ПОЛНА</div>
             <div style={{fontSize:12,color:"#6a5030",marginBottom:6,fontFamily:"Georgia,serif"}}>
-              В суме нет места. Новая грамота:
+              В руке нет места. Новая карта:
             </div>
             <div style={{display:"inline-block",border:"2px solid #c8901c",borderRadius:8,
               padding:"10px 16px",background:"rgba(200,144,28,0.1)",marginBottom:16}}>
@@ -2014,7 +2013,7 @@ export default function App(){
               </div>
             </div>
             <div style={{fontSize:11,color:"#8a7050",marginBottom:6,fontFamily:"Georgia,serif"}}>
-              Брось одну грамоту — иль потеряешь два удара в следующей сечи:
+              Сбрось одну карту — иначе −2 ОД на следующем ходу:
             </div>
             <div style={{display:"flex",gap:10,justifyContent:"center",marginBottom:20,flexWrap:"wrap"}}>
               {hand.map(card=>{
