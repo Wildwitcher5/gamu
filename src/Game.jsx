@@ -794,7 +794,7 @@ export default function App(){
   const [playerAvatar,setPlayerAvatar]=useState(()=>localStorage.getItem("player_avatar")||null);
   const [setupName,setSetupName]=useState("");
   const [setupAvatarImg,setSetupAvatarImg]=useState(null);
-  const [showDeckPopup,setShowDeckPopup]=useState(false);
+
   const [showSurvey1,setShowSurvey1]=useState(true);
   const [showSurvey2,setShowSurvey2]=useState(false);
   const [survey1Data,setSurvey1Data]=useState(null);
@@ -811,7 +811,7 @@ export default function App(){
   const [counterTrigger,setCounterTrigger]=useState(null);
   const lastAlexSpeakRef=useRef(0);
 
-  useEffect(()=>{setChat([{from:"alex",text:`${allyNick}: норм игра, попробуем)`}]);},[]);
+  useEffect(()=>{setChat([{from:"alex",text:"норм, давай играть)"}]);},[]);
   useEffect(()=>{chatEnd.current?.scrollIntoView({behavior:"smooth"});},[chat]);
   useEffect(()=>{logEnd.current?.scrollIntoView({behavior:"smooth"});},[log]);
   // Keep ref to latest skipTurn to avoid stale closure in auto-skip effect
@@ -984,37 +984,51 @@ export default function App(){
   /* ── alexSpeak — situational chat via DeepSeek (falls back to FALLBACKS) */
   const alexSpeak=async(eventType,g)=>{
     const now=Date.now();
-    const forceSpeak=["trade_offer","victory","defeat","trade_accepted","trade_declined"].includes(eventType);
+    const forceSpeak=["trade_offer","victory","defeat","trade_accepted","trade_declined","ally_down","revived"].includes(eventType);
     if(!forceSpeak&&now-lastAlexSpeakRef.current<8000)return;
     lastAlexSpeakRef.current=now;
     const persona=allyPersona;
     const nick=allyNick;
     const fallback=persona?.FALLBACKS?.[eventType]??"Понял.";
     if(!persona){addChat("alex",fallback);return;}
-    const ctx={
-      allyHp:g?.alex?.hp??"?",
-      youHp:g?.you?.hp??"?",
+    const allyHp=g?.alex?.hp??"?";
+    const youHp=g?.you?.hp??"?";
+    const hand=alexHand.map(type=>({
+      name:CARDS[type]?.n??type,
+      cost:CARDS[type]?.od??1,
+      desc:CARDS[type]?.d??"",
+    }));
+    const ctx={allyHp,youHp,
       enemies:["e1","e2"].filter(k=>g?.[k]?.hp>0).map(k=>`${en(k)} ${g[k].hp}HP`).join(", ")||"повержены",
-      hand:alexHand.map(type=>({
-        name:CARDS[type]?.n??type,
-        cost:CARDS[type]?.od??1,
-        desc:CARDS[type]?.d??"",
-      })),
+      hand,
     };
+    // Card-aware tactical hints
+    const healCard=hand.find(c=>c.name==="ИСЦЕЛИТЬ");
+    const shieldCard=hand.find(c=>c.name==="ЩИТ");
+    const reviveCard=hand.find(c=>c.name==="ВОЗРОЖДЕНИЕ");
+    const tacticalNote=(
+      healCard&&typeof youHp==="number"&&youHp<55 ? `У тебя есть карта ИСЦЕЛИТЬ — у партнёра ${youHp}HP, можешь предложить исцелить его.` :
+      typeof allyHp==="number"&&allyHp<30&&!healCard ? `Твои HP критически низкие (${allyHp}/100). Попроси партнёра тебя вылечить или прикрыть.` :
+      shieldCard&&typeof allyHp==="number"&&allyHp<45 ? `У тебя ${allyHp}HP и есть ЩИТ — можешь упомянуть что щитуешься.` :
+      reviveCard&&typeof allyHp==="number"&&allyHp<=0 ? `Ты мёртв, но у партнёра есть ВОЗРОЖДЕНИЕ — намекни что ждёшь воскрешения.` : ""
+    );
     const hints={
-      trade_offer:"Предложи обменяться картой — скажи что хочешь отдать, в своей манере.",
-      trade_accepted:"Партнёр принял обмен. Отреагируй позитивно, в своей манере.",
-      trade_declined:"Партнёр отказался от обмена. Скажи понимающе.",
-      low_hp:"У кого-то из вас мало HP. Скажи тревожно, в своей манере.",
-      enemy_low_hp:"Враг почти мёртв. Подбодри кратко.",
-      took_heavy_hit:"Партнёр получил сильный удар. Скажи сочувственно.",
-      victory:"Победа! Поздравь кратко, в своей манере.",
-      defeat:"Проигрыш. Утешь кратко, в своей манере.",
-      joint_combo:"Только что сделали совместный удар. Скажи воодушевлённо.",
+      trade_offer:`Предложи партнёру обменяться картой. Скажи что у тебя есть что-то лишнее — коротко, в своей манере.`,
+      trade_accepted:`Партнёр принял твой обмен. Отреагируй коротко и позитивно.`,
+      trade_declined:`Партнёр отказался от обмена. Скажи ок, без обид.`,
+      low_hp:`У кого-то критически мало HP (твой: ${allyHp}, партнёра: ${youHp}). ${tacticalNote||"Скажи что ситуация напряжённая."} Коротко.`,
+      enemy_low_hp:`Враги почти побеждены. Скажи что-то ободряющее — очень коротко.`,
+      took_heavy_hit:`Партнёр только что получил сильный удар (у него ${youHp}HP). ${tacticalNote||"Скажи что-то сочувственное."} Без пафоса, коротко.`,
+      victory:`Победили врагов. Скажи что-то по результату — коротко, в своей манере.`,
+      defeat:`Проиграли. Скажи что-то утешительное — коротко.`,
+      joint_combo:`Только что нанесли совместный удар. Скажи что-то коротко.`,
+      ally_down:`Ты погиб в бою (HP=0). Напиши партнёру что пал и что нужна карта Возрождения — коротко.`,
+      revived:`Партнёр тебя воскресил картой Возрождения! Поблагодари коротко, в своей манере.`,
+      skip:`Партнёр пропустил ход и копит очки действий. ${tacticalNote||"Скажи что-нибудь про ситуацию в бою."} Коротко.`,
     };
     const text=await deepseekChat(
       persona.getSystemPrompt(nick,ctx,chat),
-      hints[eventType]??"Скажи что-нибудь уместное по ситуации.",
+      hints[eventType]??"Скажи что-нибудь уместное по ситуации в бою — очень коротко.",
       fallback,
       chat.slice(-4)
     );
@@ -1025,22 +1039,22 @@ export default function App(){
   const askAlexJoint=async t=>{
     setJointTarget(t);setLoad(true);
     setThinking(th=>({...th,alex:true}));
-    await dly(1500+rnd(3000));
+    await dly(800+rnd(1200));
     setThinking(th=>({...th,alex:false}));
-    if(alexHand.includes("joint")){
-      addChat("alex","Готов. Бьём вместе!");setJR(true);
-    }else{
-      try{
-        const r=await fetch(`${API_BASE}/v1/messages`,{method:"POST",headers:{"Content-Type":"application/json","x-api-key":API_KEY,"anthropic-version":"2023-06-01"},
-          body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:100,
-            system:`Алекс, напарник. Игрок предлагает совместный удар по ${en(t)} (${gs[t].hp}HP). Твой HP: ${gs.alex.hp}. Ответь 1 коротким предложением. Скажи "готов" если да.`,
-            messages:[{role:"user",content:"Совместный удар?"}]})});
-        const d=await r.json();
-        const txt=d.content?.[0]?.text??"Готов.";
-        addChat("alex",txt);
-        setJR(txt.toLowerCase().includes("готов")||txt.toLowerCase().includes("да"));
-      }catch{addChat("alex","Готов. Бьём вместе.");setJR(true);}
-    }
+    const canJoin=alexHand.includes("joint");
+    const ctx={
+      allyHp:gs.alex.hp,youHp:gs.you.hp,
+      enemies:["e1","e2"].filter(k=>gs[k].hp>0).map(k=>`${en(k)} ${gs[k].hp}HP`).join(", ")||"повержены",
+      hand:alexHand.map(type=>({name:CARDS[type]?.n??type,cost:CARDS[type]?.od??1,desc:CARDS[type]?.d??""})),
+    };
+    const sys=allyPersona?.getSystemPrompt(allyNick,ctx,chat)??`Ты игрок ${allyNick} в карточной игре.`;
+    const prompt=canJoin
+      ?`Партнёр предлагает совместный удар по ${en(t)} (${gs[t].hp}HP). У тебя есть карта совместного удара. Скажи кратко что готов — 1 фраза.`
+      :`Партнёр предлагает совместный удар по ${en(t)} (${gs[t].hp}HP). У тебя нет карты совместного удара. Скажи кратко что не можешь — 1 фраза.`;
+    const fallback=canJoin?"Готов, бьём!":"Нет нужной карты сейчас.";
+    const txt=await deepseekChat(sys,prompt,fallback,chat.slice(-4));
+    addChat("alex",txt);
+    setJR(canJoin||(txt.toLowerCase().includes("готов")||txt.toLowerCase().includes("давай")||txt.toLowerCase().includes("бьём")));
     setLoad(false);
   };
 
@@ -1072,16 +1086,29 @@ export default function App(){
     const applyEnemyCard=(card,actor)=>{
       const name=actor==="e1"?en("e1"):en("e2");
       const allyKey=actor==="e1"?"e2":"e1";
-      // New target selection logic — diversified + strategic
+      // Target selection — varied and strategic
       const chooseTgt=()=>{
         const youAlive=ng.you.hp>0;
         const alexAlive=ng.alex.hp>0;
         if(!youAlive)return"alex";
         if(!alexAlive)return"you";
-        if(Math.random()<0.4)return"alex";
-        if(ng.you.trap||ng.you.counter)return"you";
+        // Avoid players with trap/counter active
+        if(ng.you.trap&&!ng.alex.trap)return"alex";
+        if(ng.you.counter&&!ng.alex.counter)return"alex";
+        // 40% random target, 60% target whoever has less HP
+        if(Math.random()<0.4)return Math.random()<0.5?"you":"alex";
         return ng.you.hp<=ng.alex.hp?"you":"alex";
       };
+      // Strategic override for aggressive cards — bots sometimes play defensively
+      const isAggressive=["attack","double","rage","poison","bleed"].includes(card);
+      const selfHpPct=ng[actor].hp/(ng[actor].maxHp||100);
+      const allyHpPct=ng[allyKey].hp>0?ng[allyKey].hp/(ng[allyKey].maxHp||100):1;
+      let effectiveCard=card;
+      if(isAggressive){
+        if(selfHpPct<0.4&&Math.random()<0.6)effectiveCard="shield";
+        else if(allyHpPct<0.35&&ng[allyKey].hp>0&&Math.random()<0.5)effectiveCard="healAlex";
+        else if(Math.random()<0.18)effectiveCard="shield"; // occasional defensive play
+      }
       const tgt=chooseTgt();
       // Basic attack with trap/counter check
       const basicAtk=(target,dmg,emoji="⚔️")=>{
@@ -1090,7 +1117,7 @@ export default function App(){
         if(target==="you"&&ng.you.counter&&d>0){const counterDmg=d;ng.you={...ng.you,counter:false};ng[actor]={...ng[actor],hp:cl(ng[actor].hp-counterDmg,0,999)};hit(actor,counterDmg);logs.push(`↩️ Контрудар! ${name} −${counterDmg}HP`);setCounterTrigger({actor,dmg:counterDmg});setTimeout(()=>setCounterTrigger(null),1400);d=0;}
         if(d>0){ng[target]={...ng[target],hp:cl(ng[target].hp-d,0,ng[target].maxHp)};hit(target,d);logs.push(`${name} ${emoji}→${target==="you"?"тебя":"Союзника"}: −${d}`);}
       };
-      switch(card){
+      switch(effectiveCard){
         case"shield": ng[actor]={...ng[actor],hp:cl(ng[actor].hp+10,0,ng[actor].maxHp)};logs.push(`${name} 🛡️: +10HP`);break;
         case"healAlex":
           if(ng[allyKey].hp>0){ng[allyKey]={...ng[allyKey],hp:cl(ng[allyKey].hp+12,0,ng[allyKey].maxHp)};logs.push(`${name} 💉→${en(allyKey)}: +12HP`);}
@@ -1100,6 +1127,7 @@ export default function App(){
           else basicAtk(tgt,8);break;
         case"trap": ng[actor]={...ng[actor],trap:true};logs.push(`${name} 🪤: Ловушка!`);break;
         case"counter": ng[actor]={...ng[actor],counter:true};logs.push(`${name} ↩️: Контрудар готов`);break;
+        case"attack": basicAtk(tgt,8);break;
         case"poison":
           if(ng[tgt].poison===0){ng[tgt]={...ng[tgt],poison:3};logs.push(`${name} ☠️→${tgt==="you"?"тебя":"Союзника"}: яд`);}
           else basicAtk(tgt,8);break;
@@ -1119,7 +1147,7 @@ export default function App(){
           else basicAtk(tgt,8);break;
         case"spy": newE1h=actor==="e1"?drawInto(newE1h,1):newE1h;newE2h=actor==="e2"?drawInto(newE2h,1):newE2h;logs.push(`${name} 🔍: доп. карта`);break;
         case"energy": newE1h=actor==="e1"?drawInto(newE1h,1):newE1h;newE2h=actor==="e2"?drawInto(newE2h,1):newE2h;logs.push(`${name} ⚡: доп. карта`);break;
-        default: basicAtk(tgt,12);
+        default: basicAtk(tgt,8);
       }
     };
 
@@ -1153,7 +1181,7 @@ export default function App(){
     if(phase!=="player"||loading)return;
     setPhase("busy");setLoad(true);setPlayed([]);setJC(null);setJR(false);
     const nb=Math.min(odBank+1,1);
-    addLog(`Ход ${turn}: Пропуск — +1 ОД в банк`);addChat("alex","Копишь силы? Ладно.");
+    addLog(`Ход ${turn}: Пропуск — +1 ОД в банк`);
     let g={you:{...gs.you},alex:{...gs.alex},e1:{...gs.e1},e2:{...gs.e2}};
     const logs=[];
     const ar=await alexTurnAPI(g,"",false);if(ar.message&&ar.message.trim())addChat("alex",ar.message);
@@ -1189,7 +1217,7 @@ export default function App(){
     setDrawCooldown(0);setTradeUsed(false);
     if(g.e1.hp<=0&&g.e2.hp<=0){setWinner("player");setPhase("over");setTimeout(()=>alexSpeak("victory",g),300);}
     else if(g.you.hp<=0&&g.alex.hp<=0){setWinner("enemy");setPhase("over");setTimeout(()=>alexSpeak("defeat",g),300);}
-    else if(g.alex.hp<=0){addChat("alex","Я пал... воскреси меня картой Возрождения!");setTurn(t=>t+1);setOd(cl(2+nb-drawCooldown,1,4));setOdBank(0);setPhase(pendingDrawCard?"overflow":"player");}
+    else if(g.alex.hp<=0){setTimeout(()=>alexSpeak("ally_down",g),300);setTurn(t=>t+1);setOd(cl(2+nb-drawCooldown,1,4));setOdBank(0);setPhase(pendingDrawCard?"overflow":"player");}
     else{setTurn(t=>t+1);setOd(cl(2+nb-drawCooldown,1,4));setOdBank(0);setPhase(pendingDrawCard?"overflow":"player");}
     setLastActions({
       e1:logs.filter(l=>l.startsWith(en("e1"))||l.startsWith("💥 ВРАГИ")).slice(-1)[0]??"",
@@ -1233,7 +1261,7 @@ export default function App(){
         case"trap":{g.you={...g.you,trap:true};showBanner("🪤 Ловушка установлена",'#e8d090');logs.push("Ты 🪤: Ловушка установлена");break;}
         case"counter":{g.you={...g.you,counter:true};showBanner("↩️ Контрудар готов",'#e8d090');logs.push("Ты ↩️: Контрудар готов");break;}
         case"double":{const d=8;const ot=["e1","e2"].find(k=>k!==target&&g[k].hp>0)??target;if(g[target].hp>0){g[target]={...g[target],hp:cl(g[target].hp-d,0,999)};doEvent(target,d,`⚔⚔ Двойной → ${en(target)} −${d} HP`,'#ff6060');}if(ot!==target&&g[ot].hp>0){g[ot]={...g[ot],hp:cl(g[ot].hp-d,0,999)};doEvent(ot,d,`⚔⚔ Двойной → ${en(ot)} −${d} HP`,'#ff6060');}logs.push(`Ты ⚔️⚔️→${en(target)}+${en(ot)}: −${d} каждому`);break;}
-        case"revive":{if(g.alex.hp<=0){g.alex={...g.alex,hp:30};logs.push("✨ Союзник возрождён (30HP)!");setReviveAnim(true);setTimeout(()=>setReviveAnim(false),1500);addChat("alex","Я ещё в строю! Спасибо братец.");}break;}
+        case"revive":{if(g.alex.hp<=0){g.alex={...g.alex,hp:30};logs.push("✨ Союзник возрождён (30HP)!");setReviveAnim(true);setTimeout(()=>setReviveAnim(false),1500);setTimeout(()=>alexSpeak("revived",g),600);}break;}
         case"spy":{
           const sHand=target==="e1"?localE1h:localE2h;
           if(sHand.length>0){
@@ -1331,7 +1359,7 @@ export default function App(){
     setSharedDeck(capturedDeck);setFatigueCycle(capturedCycle);}
     if(g.e1.hp<=0&&g.e2.hp<=0){setWinner("player");setPhase("over");setTimeout(()=>alexSpeak("victory",g),300);}
     else if(g.you.hp<=0&&g.alex.hp<=0){setWinner("enemy");setPhase("over");setTimeout(()=>alexSpeak("defeat",g),300);}
-    else if(g.alex.hp<=0){addChat("alex","Я пал... воскреси меня картой Возрождения!");setTurn(t=>t+1);setTradeUsed(false);setPhase(pendingDrawCard?"overflow":"player");}
+    else if(g.alex.hp<=0){setTimeout(()=>alexSpeak("ally_down",g),300);setTurn(t=>t+1);setTradeUsed(false);setPhase(pendingDrawCard?"overflow":"player");}
     else{setTurn(t=>t+1);setTradeUsed(false);setPhase(pendingDrawCard?"overflow":"player");}
     setLastActions({
       e1:logs.filter(l=>l.startsWith(en("e1"))||l.startsWith("💥 ВРАГИ")).slice(-1)[0]??"",
@@ -1341,12 +1369,19 @@ export default function App(){
     setLoad(false);
   };
 
-  /* ── Alex APIs (stubs — replace with DeepSeek later) ───────────────── */
-  const alexTurnAPI=async(g,_lm,al)=>{
+  /* ── Alex turn action — strategic decision ──────────────────────────── */
+  const alexTurnAPI=async(g,_lm,_al)=>{
     const alive=["e1","e2"].filter(k=>g[k].hp>0);
-    if(al&&g.alex.hp<40)return{message:"",actions:[{type:"shield"}]};
-    if(g.you.hp<30&&g.alex.hp>20)return{message:"",actions:[{type:"heal"}]};
-    if(alive.length>0)return{message:"",actions:[{type:"attack",target:alive[0]}]};
+    const weakest=alive.length>0?alive.reduce((a,b)=>g[a].hp<=g[b].hp?a:b):null;
+    // Priority 1: shield if critically low HP
+    if(g.alex.hp<25)return{message:"",actions:[{type:"shield"}]};
+    // Priority 2: heal partner if they're very low and we have HP to spare
+    if(g.you.hp<28&&g.alex.hp>35)return{message:"",actions:[{type:"heal"}]};
+    // Priority 3: varied — sometimes defensive even at medium HP
+    if(g.alex.hp<50&&Math.random()<0.35)return{message:"",actions:[{type:"shield"}]};
+    if(g.you.hp<55&&g.alex.hp>40&&Math.random()<0.25)return{message:"",actions:[{type:"heal"}]};
+    // Priority 4: attack weakest enemy
+    if(weakest)return{message:"",actions:[{type:"attack",target:weakest}]};
     return{message:"",actions:[]};
   };
   const alexChatAPI=async(msg,g)=>{
@@ -1382,7 +1417,7 @@ export default function App(){
     setThinking({e1:false,e2:false,alex:false});setAnimating(false);
     animQueueRef.current=[];animPlayingRef.current=false;
     deathLoggedRef.current=false;
-    setChat([{from:"alex",text:`${allyNick}: норм игра, попробуем)`}]);
+    setChat([{from:"alex",text:"норм, давай играть)"}]);
   };
 
   const isP=phase==="player"&&!loading&&!animating&&gs.you.hp>0;
@@ -1576,13 +1611,6 @@ export default function App(){
                       💱 обмен
                     </button>
                   ):null}
-                  <button onClick={()=>setShowDeckPopup(v=>!v)}
-                    style={{background:"rgba(200,160,80,0.13)",color:"#c8a050",
-                      border:"1.5px solid rgba(200,160,80,0.4)",borderRadius:6,
-                      padding:"6px 13px",fontSize:12,fontWeight:700,cursor:"pointer",
-                      fontFamily:"Georgia,serif",letterSpacing:0.3}}>
-                    🃏 Колода
-                  </button>
                 </div>
               </div>
               {gs.alex.hp>0&&<CardBackRow count={alexHand.length}/>}
@@ -1914,56 +1942,6 @@ export default function App(){
         </div>
       )}
 
-      {/* Deck popup */}
-      {showDeckPopup&&(
-        <div style={{position:"fixed",inset:0,zIndex:76,display:"flex",alignItems:"center",
-          justifyContent:"center",background:"rgba(0,0,0,0.72)",backdropFilter:"blur(5px)",
-          animation:"fadeIn 0.2s"}} onClick={()=>setShowDeckPopup(false)}>
-          <div style={{background:"linear-gradient(135deg,#0e0a06,#1a1208)",
-            border:"1px solid rgba(200,160,80,0.35)",borderRadius:14,padding:"24px 28px",
-            maxWidth:460,width:"90%",maxHeight:"70vh",overflowY:"auto",
-            boxShadow:"0 0 50px rgba(200,120,20,0.25)",animation:"scaleIn 0.25s cubic-bezier(.15,1.2,.3,1)"}}
-            onClick={e=>e.stopPropagation()}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-              <div>
-                <div style={{fontSize:14,fontWeight:900,letterSpacing:3,color:"#c8901c",fontFamily:"Georgia,serif"}}>🃏 ТВОЯ РУКА</div>
-                <div style={{fontSize:10,color:"#6a5030",fontFamily:"Georgia,serif"}}>В руке: {hand.length} / 5</div>
-              </div>
-              <button onClick={()=>setShowDeckPopup(false)}
-                style={{background:"transparent",border:"none",color:"#6a5030",fontSize:18,cursor:"pointer",
-                  fontFamily:"Georgia,serif",lineHeight:1,padding:"0 4px"}}>✕</button>
-            </div>
-            {hand.length===0
-              ?<div style={{fontSize:12,color:"#4a3010",fontFamily:"Georgia,serif",textAlign:"center",padding:"16px 0"}}>
-                Рука пуста
-              </div>
-              :hand.map((card,i)=>{
-                const def=CARDS[card.type];
-                return(
-                  <div key={card.uid} style={{display:"flex",gap:12,alignItems:"center",
-                    padding:"9px 12px",borderRadius:8,marginBottom:6,
-                    background:"rgba(200,160,80,0.05)",
-                    border:`1px solid ${def.c}33`}}>
-                    <span style={{fontSize:20,flexShrink:0}}>{def.e}</span>
-                    <div>
-                      <div style={{fontSize:12,fontWeight:700,color:def.c,fontFamily:"Georgia,serif",
-                        marginBottom:2}}>{def.n}</div>
-                      <div style={{fontSize:11,color:"#7a6040",fontFamily:"Georgia,serif",lineHeight:1.4}}>
-                        {def.d}</div>
-                    </div>
-                    <div style={{marginLeft:"auto",flexShrink:0,display:"flex",gap:2}}>
-                      {Array.from({length:def.od},(_,j)=>(
-                        <div key={j} style={{width:10,height:10,borderRadius:"50%",
-                          background:"rgba(60,160,255,0.7)"}}/>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })
-            }
-          </div>
-        </div>
-      )}
 
       {/* Mulligan overlay — only after tutorial is done */}
       {phase==="mulligan"&&!showTutorial&&(
@@ -2078,7 +2056,7 @@ export default function App(){
       )}
 
       {/* Tutorial overlay */}
-      {showTutorial&&!showSetup&&!showSurvey1&&!showCondBrief&&<Tutorial onEnd={()=>setShowTutorial(false)}/>}
+      {showTutorial&&!showSetup&&!showSurvey1&&!showCondBrief&&<Tutorial allyNick={allyNick} onEnd={()=>setShowTutorial(false)}/>}
 
       {/* Pre-game survey — shown after setup, before game */}
       {showSurvey1&&!showSetup&&<Survey type="pre" onComplete={data=>{

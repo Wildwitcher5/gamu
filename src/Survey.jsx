@@ -368,11 +368,11 @@ function RadioScale({ scale, value, onChange, name }) {
 /* Semantic differential: left label — radio dots — right label */
 function SemanticDiff({ leftLabel, rightLabel, n, value, onChange, name }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap", justifyContent: "center", margin: "12px 0 4px" }}>
-      <div style={{ fontSize: 13, color: "#3a3228", lineHeight: 1.45, textAlign: "right", maxWidth: 210, flex: "0 1 210px", fontFamily: "Georgia, serif", fontStyle: "italic" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "center", margin: "12px 0 4px", width: "100%" }}>
+      <div style={{ fontSize: 12, color: "#3a3228", lineHeight: 1.45, textAlign: "right", flex: "1 1 0", minWidth: 0, fontFamily: "Georgia, serif", fontStyle: "italic" }}>
         {leftLabel}
       </div>
-      <div style={{ display: "flex", alignItems: "flex-end", gap: 14 }}>
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 10, flexShrink: 0 }}>
         {Array.from({ length: n }, (_, i) => (
           <label key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, cursor: "pointer" }}>
             <input
@@ -380,13 +380,13 @@ function SemanticDiff({ leftLabel, rightLabel, n, value, onChange, name }) {
               name={name}
               checked={value === i + 1}
               onChange={() => onChange(i + 1)}
-              style={{ accentColor: "#2d5a8c", width: 20, height: 20, cursor: "pointer" }}
+              style={{ accentColor: "#2d5a8c", width: 18, height: 18, cursor: "pointer" }}
             />
             <span style={{ fontSize: 11, color: "#bbb" }}>{i + 1}</span>
           </label>
         ))}
       </div>
-      <div style={{ fontSize: 13, color: "#3a3228", lineHeight: 1.45, textAlign: "left", maxWidth: 210, flex: "0 1 210px", fontFamily: "Georgia, serif", fontStyle: "italic" }}>
+      <div style={{ fontSize: 12, color: "#3a3228", lineHeight: 1.45, textAlign: "left", flex: "1 1 0", minWidth: 0, fontFamily: "Georgia, serif", fontStyle: "italic" }}>
         {rightLabel}
       </div>
     </div>
