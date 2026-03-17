@@ -761,7 +761,6 @@ export default function App(){
   const [od,setOd]=useState(2);
   const [odBank,setOdBank]=useState(0);
   const [comboGlow,setComboGlow]=useState(null);
-  const [lastMsg,setLastMsg]=useState("");
   const [preview,setPreview]=useState(null);
   const [enemyCard,setEnemyCard]=useState({e1:null,e2:null});
   const [reviveAnim,setReviveAnim]=useState(false);
@@ -1020,7 +1019,6 @@ export default function App(){
       joint_combo:`Только что нанесли совместный удар. Скажи что-то коротко.`,
       ally_down:`Ты погиб в бою (HP=0). Напиши партнёру что пал и что нужна карта Возрождения — коротко.`,
       revived:`Партнёр тебя воскресил картой Возрождения! Поблагодари коротко, в своей манере.`,
-      skip:`Партнёр пропустил ход и копит очки действий. ${tacticalNote||"Скажи что-нибудь про ситуацию в бою."} Коротко.`,
     };
     const text=await deepseekChat(
       persona.getSystemPrompt(nick,ctx,chat),
@@ -1297,7 +1295,7 @@ export default function App(){
     setJC(null);setJR(false);setJointTarget(null);
     const allyLow=g.alex.hp<MHP.alex*0.35||g.you.hp<MHP.you*0.35;
     if(Math.random()<0.25){setThinking(t=>({...t,alex:true}));await dly(1500+rnd(1500));setThinking(t=>({...t,alex:false}));}
-    const ar=await alexTurnAPI(g,lastMsg,allyLow);if(ar.message&&ar.message.trim())addChat("alex",ar.message);setLastMsg("");
+    const ar=await alexTurnAPI(g,"",allyLow);
     let newAlexH=[...alexHand];
     const alexActionType=ar.actions?.[0]?.type??"";
     for(const a of(ar.actions??[]).slice(0,1)){
@@ -1401,7 +1399,7 @@ export default function App(){
   };
   const sendChat=async()=>{
     const msg=input.trim();if(!msg||loading)return;
-    addChat("you",msg);setLastMsg(msg);setInput("");setLoad(true);
+    addChat("you",msg);setInput("");setLoad(true);
     const r=await alexChatAPI(msg,gs);addChat("alex",r);setLoad(false);
   };
   const restart=()=>{
@@ -1412,7 +1410,7 @@ export default function App(){
     setPlayed([]);setJC(null);setJR(false);setJointTarget(null);
     setPhase("mulligan");setWinner(null);setLog([]);
     setTurn(1);setLoad(false);setFlash({});setShake(null);setOd(2);setOdBank(0);
-    setLastMsg("");setComboGlow(null);setPreview(null);
+    setComboGlow(null);setPreview(null);
     setTyping(false);setTradeOffer(null);setTradeSel(null);setTradeUsed(false);setDrawCooldown(0);setCoopScore(0);
     setThinking({e1:false,e2:false,alex:false});setAnimating(false);
     animQueueRef.current=[];animPlayingRef.current=false;
@@ -1680,10 +1678,10 @@ export default function App(){
               <div ref={chatEnd}/>
             </div>
             <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:8}}>
-              {[["🛡 Прикрой","Прикрой меня!"],["⚔ Бей!","Бей Стражника!"],
+              {[["🛡 Прикрой","Прикрой меня!"],["⚔ Бей!",`Бей ${en("e1")}!`],
                 ["💉 Лечи","Исцели меня!"],["💥 Совм.","Совместный удар?"],
                 ["📖 Комбо?","Какие комбо нам доступны?"]].map(([label,msg])=>(
-                <button key={label} onClick={()=>{if(!loading){addChat("you",msg);setLastMsg(msg);setInput("");setLoad(true);alexChatAPI(msg,gs).then(r=>{addChat("alex",r);setLoad(false);});}}}
+                <button key={label} onClick={()=>{if(!loading){addChat("you",msg);setInput("");setLoad(true);alexChatAPI(msg,gs).then(r=>{addChat("alex",r);setLoad(false);});}}}
                   disabled={loading} style={{background:"rgba(200,160,80,0.06)",border:"1px solid rgba(200,160,80,0.2)",
                   borderRadius:6,padding:"5px 9px",color:loading?"#2a1808":"#8a7050",fontSize:10,
                   cursor:loading?"default":"pointer",fontFamily:"Georgia,serif"}}>{label}</button>
@@ -2151,7 +2149,7 @@ export default function App(){
                 fontFamily:"Georgia,serif",
                 boxShadow:setupName.trim()?"0 0 30px rgba(200,120,20,0.5)":"none",
                 transition:"all 0.2s"}}>
-              ВСТАТЬ В СТРОЙ →
+              НАЧАТЬ →
             </button>
           </div>
         </div>
