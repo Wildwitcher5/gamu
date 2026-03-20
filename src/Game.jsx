@@ -60,21 +60,21 @@ const ART = {
 const MHP = { you:100, alex:100, e1:100, e2:100 };
 
 const CARDS = {
-  attack:  {e:"⚔️",  n:"АТАКА",        d:"−8 HP врагу",                              c:"#e05252", t:"enemy", od:1},
-  double:  {e:"⚔️⚔️",n:"РАССЕЧЕНИЕ",   d:"−8 HP двум разным врагам",                 c:"#ff7070", t:"enemy", od:2},
-  shield:  {e:"🛡️", n:"ЩИТ",          d:"+10 HP себе",                               c:"#4c7fe0", t:null,    od:1},
-  healAlex:{e:"💉",  n:"ИСЦЕЛИТЬ",     d:"+12 HP Союзнику",                           c:"#4caf82", t:null,    od:1},
-  poison:  {e:"☠️",  n:"ЯД",           d:"Яд: 3 тика по −5 HP",                      c:"#7bc67e", t:"enemy", od:1},
-  bleed:   {e:"🩸",  n:"КРОВОТЕЧЕНИЕ", d:"Кровотечение: 4 тика по −3 HP (стакается)", c:"#cc3344", t:"enemy", od:1},
-  rage:    {e:"🔥",  n:"ЯРОСТЬ",       d:"−18 HP врагу, −4 HP себе",                 c:"#e06030", t:"enemy", od:2},
-  joint:   {e:"💥",  n:"СОВМ. УДАР",  d:"22 урона (нужно согласие Союзника)",        c:"#e09a3c", t:"enemy", od:1},
-  spy:     {e:"🔍",  n:"ШПИОНАЖ",     d:"Украсть случайную карту из руки врага",    c:"#8b5cf6", t:"enemy", od:1},
-  energy:  {e:"⚡",  n:"ЭНЕРГИЯ",     d:"+2 ОД на след. ход",                        c:"#f0d060", t:null,    od:1},
-  trap:    {e:"🪤",  n:"ЛОВУШКА",     d:"Ловушка: −10 HP атакующему врагу",         c:"#d97706", t:null,    od:1},
-  counter:  {e:"↩️",  n:"КОНТР",       d:"Отразить урон по тебе обратно врагу",                           c:"#06b6d4", t:null,    od:1},
-  revive:   {e:"✨",  n:"ВОЗРОЖДЕНИЕ", d:"Воскресить Союзника (30 HP). Только если мёртв",                 c:"#ffd700", t:null,    od:2},
-  perebor:  {e:"🃏",  n:"ПЕРЕБОР",     d:"+2 карты в руку",                                                 c:"#9b59b6", t:null,    od:1},
-  jcounter: {e:"🔰",  n:"КОНТРУДАР",   d:"Отменяет входящий совм. удар. Возвращает 50% урона",             c:"#22d3ee", t:"enemy", od:2},
+  attack:  {e:"⚔️",  n:"АТАКА",        d:"−8 здоровья врагу",                              c:"#e05252", t:"enemy", od:1},
+  double:  {e:"⚔️⚔️",n:"РАССЕЧЕНИЕ",   d:"−8 здоровья двум разным врагам",                 c:"#ff7070", t:"enemy", od:2},
+  shield:  {e:"🛡️", n:"ЩИТ",          d:"+10 здоровья себе",                               c:"#4c7fe0", t:null,    od:1},
+  healAlex:{e:"💉",  n:"ИСЦЕЛИТЬ",     d:"+12 здоровья Союзнику",                           c:"#4caf82", t:null,    od:1},
+  poison:  {e:"☠️",  n:"ЯД",           d:"Яд: 3 тика по −5 здоровья",                      c:"#7bc67e", t:"enemy", od:1},
+  bleed:   {e:"🩸",  n:"КРОВОТЕЧЕНИЕ", d:"Кровотечение: 4 тика по −3 здоровья (стакается)", c:"#cc3344", t:"enemy", od:1},
+  rage:    {e:"🔥",  n:"ЯРОСТЬ",       d:"−18 здоровья врагу, −4 себе",                    c:"#e06030", t:"enemy", od:2},
+  joint:   {e:"💥",  n:"СОВМ. УДАР",  d:"22 урона (нужно согласие Союзника)",              c:"#e09a3c", t:"enemy", od:1},
+  spy:     {e:"🔍",  n:"ШПИОНАЖ",     d:"Взять случайную карту из руки врага",             c:"#8b5cf6", t:"enemy", od:1},
+  energy:  {e:"⚡",  n:"ЭНЕРГИЯ",     d:"+2 ОД на след. ход",                              c:"#f0d060", t:null,    od:1},
+  trap:    {e:"🪤",  n:"ЛОВУШКА",     d:"−10 здоровья следующему атакующему врагу",        c:"#d97706", t:null,    od:1},
+  counter:  {e:"↩️",  n:"КОНТР",       d:"Отразить входящий урон обратно врагу",            c:"#06b6d4", t:null,    od:1},
+  revive:   {e:"✨",  n:"ВОЗРОЖДЕНИЕ", d:"Воскресить Союзника (30 здоровья). Только если мёртв", c:"#ffd700", t:null, od:2},
+  perebor:  {e:"🃏",  n:"ПЕРЕБОР",     d:"+2 карты в руку",                                 c:"#9b59b6", t:null,    od:1},
+  jcounter: {e:"🔰",  n:"КОНТРУДАР",   d:"Отменить совм. удар врагов, вернуть 50% урона",   c:"#22d3ee", t:"enemy", od:2},
 };
 
 const DECK_TEMPLATE = [
@@ -191,7 +191,7 @@ function HpBar({hp,maxHp,color,flash}){
   return(
     <div style={{flex:1,position:"relative"}}>
       <div style={{display:"flex",justifyContent:"space-between",fontSize:10,marginBottom:3,fontFamily:"Georgia,serif"}}>
-        <span style={{color:low?"#e05252":"#9a8060"}}>{low?"⚠ ":""}HP</span>
+        <span style={{color:low?"#e05252":"#9a8060"}}>{low?"⚠ ":""}ЗДР</span>
         <span style={{color:low?"#e05252":"#c8b080",fontWeight:700}}>{Math.max(0,hp)}/{maxHp}</span>
       </div>
       <div style={{height:6,background:"rgba(0,0,0,0.4)",borderRadius:3,overflow:"hidden",border:"1px solid rgba(255,255,255,0.07)"}}>
@@ -441,7 +441,12 @@ function CardPreview({card,gs,onApply,onTarget,onClose,isP,odLeft,alreadySel,en}
           {notOd&&<div style={{fontSize:11,color:"#e05252",textAlign:"center",fontFamily:"Georgia,serif"}}>Недостаточно очков действия</div>}
           {alreadySel&&<div style={{fontSize:11,color:"#4caf82",textAlign:"center",fontFamily:"Georgia,serif"}}>✓ Карта выбрана</div>}
 
-          {canAct&&!alreadySel&&!needsTgt&&(
+          {card.type==="healAlex"&&gs.alex.hp<=0&&(
+            <div style={{fontSize:11,color:"#e05252",textAlign:"center",fontFamily:"Georgia,serif"}}>
+              Союзник мёртв — сначала используй Возрождение
+            </div>
+          )}
+          {canAct&&!alreadySel&&!needsTgt&&!(card.type==="healAlex"&&gs.alex.hp<=0)&&(
             <button onClick={onApply} style={{background:"linear-gradient(135deg,#7a4008,#c87820)",color:"#fff",
               border:"none",borderRadius:7,padding:"10px",fontSize:12,fontWeight:700,
               cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:0.5}}>
@@ -452,11 +457,11 @@ function CardPreview({card,gs,onApply,onTarget,onClose,isP,odLeft,alreadySel,en}
               {gs.e1.hp>0&&<button onClick={()=>onTarget("e1")} style={{background:"#6a1818",color:"#fff",
                 border:`1px solid ${def.c}88`,borderRadius:7,padding:"10px",fontSize:12,fontWeight:700,
                 cursor:"pointer",fontFamily:"Georgia,serif"}}>
-                ⚔ Ударить {en("e1")}а ({gs.e1.hp} HP)</button>}
+                ⚔ Удар по {en("e1")} ({gs.e1.hp} здоровья)</button>}
               {gs.e2.hp>0&&<button onClick={()=>onTarget("e2")} style={{background:"#4a1050",color:"#fff",
                 border:`1px solid ${def.c}88`,borderRadius:7,padding:"10px",fontSize:12,fontWeight:700,
                 cursor:"pointer",fontFamily:"Georgia,serif"}}>
-                ⚔ Ударить {en("e2")}а ({gs.e2.hp} HP)</button>}
+                ⚔ Удар по {en("e2")} ({gs.e2.hp} здоровья)</button>}
             </>
           )}
           {alreadySel&&(
@@ -1290,7 +1295,7 @@ export default function App(){
     newHand=[...newHand,...stolenCards,...pereborDrawn];
     setHand(newHand);setTimeout(()=>setHand(h=>h.map(c=>({...c,flipIn:false}))),700);
     setPlayed([]);
-    if(jointCard&&jointTarget&&jointReady){const d=22;if(g[jointTarget].hp>0){g[jointTarget]={...g[jointTarget],hp:cl(g[jointTarget].hp-d,0,999)};doEvent(jointTarget,d,`💥 Совместный удар → ${en(jointTarget)} −${d} HP`,'#ff6060');enqueue(async()=>{showComboBanner("Совместный удар",JOINT_IMG);await dly(400);});logs.push(`💥 СОВМЕСТНЫЙ УДАР → ${en(jointTarget)}: −${d}!`);}}
+    if(jointCard&&jointTarget&&jointReady){const d=22;if(g[jointTarget].hp>0){g[jointTarget]={...g[jointTarget],hp:cl(g[jointTarget].hp-d,0,999)};doEvent(jointTarget,d,`💥 Совместный удар → ${en(jointTarget)} −${d} HP`,'#ff6060');enqueue(async()=>{showComboBanner("💥 СОВМЕСТНЫЙ УДАР",JOINT_IMG);await dly(400);});logs.push(`💥 СОВМЕСТНЫЙ УДАР → ${en(jointTarget)}: −${d}!`);}}
     else if(jointCard&&!jointReady)logs.push("💥 Союзник не готов — удар сорвался");
     setJC(null);setJR(false);setJointTarget(null);
     const allyLow=g.alex.hp<MHP.alex*0.35||g.you.hp<MHP.you*0.35;
@@ -1342,9 +1347,24 @@ export default function App(){
       else if(g.you.hp<MHP.you*0.25||g.alex.hp<MHP.alex*0.25)setTimeout(()=>alexSpeak("low_hp",g),500);
       else if(enemyLow)setTimeout(()=>alexSpeak("enemy_low_hp",g),500);
     }
-    // Trade offer (30% chance)
+    // Alex proactively suggests joint strike (20% chance if has joint card and enemies alive)
+    {const aliveAfter=["e1","e2"].filter(k=>g[k].hp>0);
+    if(newAlexH.includes("joint")&&aliveAfter.length>0&&Math.random()<0.2&&!tradeOffer){
+      const weakestE=aliveAfter.reduce((a,b)=>g[a].hp<=g[b].hp?a:b);
+      setTimeout(async()=>{
+        if(!allyPersona)return;
+        const ctx={allyHp:g.alex.hp,youHp:g.you.hp,enemies:aliveAfter.map(k=>`${en(k)} ${g[k].hp}HP`).join(", ")};
+        const hint=`У тебя есть карта Совместного удара. Предложи партнёру ударить вместе по ${en(weakestE)} (${g[weakestE].hp} здоровья). Коротко, в своей манере.`;
+        const msg=await deepseekChat(allyPersona.getSystemPrompt(allyNick,ctx,chat),hint,"слушай, давай совм. удар по нему?",chat.slice(-2));
+        addChat("alex",msg);
+      },1200);
+    }}
+    // Trade offer (30% chance) — Alex prefers to trade away low-value cards
     if(newAlexH.length>0&&!tradeOffer&&Math.random()<0.3){
-      const oi=rnd(newAlexH.length);setTradeOffer({type:newAlexH[oi],idx:oi});
+      const lowValueCards=["energy","spy","perebor"];
+      const preferredOffer=newAlexH.findIndex(t=>lowValueCards.includes(t));
+      const oi=preferredOffer>=0?preferredOffer:rnd(newAlexH.length);
+      setTradeOffer({type:newAlexH[oi],idx:oi});
       setTimeout(()=>alexSpeak("trade_offer",g),800);
     }
     // Draw 1 card for player at end of turn
@@ -1367,20 +1387,36 @@ export default function App(){
     setLoad(false);
   };
 
-  /* ── Alex turn action — strategic decision ──────────────────────────── */
-  const alexTurnAPI=async(g,_lm,_al)=>{
+  /* ── Alex turn action — strategic decision + DeepSeek message ───────── */
+  const alexTurnAPI=async(g,_lm,allyLow)=>{
     const alive=["e1","e2"].filter(k=>g[k].hp>0);
     const weakest=alive.length>0?alive.reduce((a,b)=>g[a].hp<=g[b].hp?a:b):null;
-    // Priority 1: shield if critically low HP
-    if(g.alex.hp<25)return{message:"",actions:[{type:"shield"}]};
-    // Priority 2: heal partner if they're very low and we have HP to spare
-    if(g.you.hp<28&&g.alex.hp>35)return{message:"",actions:[{type:"heal"}]};
-    // Priority 3: varied — sometimes defensive even at medium HP
-    if(g.alex.hp<50&&Math.random()<0.35)return{message:"",actions:[{type:"shield"}]};
-    if(g.you.hp<55&&g.alex.hp>40&&Math.random()<0.25)return{message:"",actions:[{type:"heal"}]};
-    // Priority 4: attack weakest enemy
-    if(weakest)return{message:"",actions:[{type:"attack",target:weakest}]};
-    return{message:"",actions:[]};
+    const hasCard=types=>types.some(t=>alexHand.includes(t));
+    // Priority decision with hand awareness
+    let actionType="attack",actionTarget=weakest??"e1";
+    if(g.alex.hp<25&&hasCard(["shield","counter","trap"])){actionType="shield";}
+    else if(g.you.hp<28&&g.alex.hp>35&&hasCard(["healAlex","revive","energy"])){actionType="heal";}
+    else if(g.alex.hp<50&&Math.random()<0.35&&hasCard(["shield","counter","trap"])){actionType="shield";}
+    else if(g.you.hp<55&&g.alex.hp>40&&Math.random()<0.25&&hasCard(["healAlex","revive","energy"])){actionType="heal";}
+    else if(weakest){actionType="attack";actionTarget=weakest;}
+    else{actionType="shield";}
+    // 40% chance to stay silent — not every action needs commentary
+    if(Math.random()<0.4){
+      return{message:"",actions:[{type:actionType,target:actionTarget}]};
+    }
+    // Generate short situational message via DeepSeek
+    const persona=allyPersona;
+    const nick=allyNick;
+    const ctx={allyHp:g.alex.hp,youHp:g.you.hp,enemies:alive.map(k=>`${en(k)} ${g[k].hp}HP`).join(", ")||"повержены"};
+    const fallbacks={attack:persona?.FALLBACKS?.enemy_low_hp??"Атакую!",shield:persona?.FALLBACKS?.low_hp??"Держусь.",heal:persona?.FALLBACKS?.took_heavy_hit??"Лечу тебя."};
+    const actionHint=actionType==="attack"
+      ?`Атакуешь ${weakest?en(weakest):"врага"} (${g[weakest??'e1']?.hp??0} здоровья). 1 короткая реплика.`
+      :actionType==="heal"?"Лечишь союзника. 1 короткая реплика."
+      :"Щитуешься. 1 короткая реплика.";
+    const message=persona
+      ?await deepseekChat(persona.getSystemPrompt(nick,ctx,chat),actionHint,fallbacks[actionType],chat.slice(-2))
+      :fallbacks[actionType];
+    return{message,actions:[{type:actionType,target:actionTarget}]};
   };
   const alexChatAPI=async(msg,g)=>{
     if(!allyPersona)return"Понял.";
@@ -1826,7 +1862,9 @@ export default function App(){
           <div style={{flex:1}}/>
 
           {/* Buttons */}
-          <button onClick={skipTurn} disabled={!isP||gs.you.hp<=0||animating} style={{
+          <button onClick={skipTurn} disabled={!isP||gs.you.hp<=0||animating}
+            title="Пропустить ход: +1 очко действий в запас на следующий ход"
+            style={{
             background:"rgba(200,160,80,0.04)",color:isP&&!animating?"#7a6035":"#2a1808",
             border:"1px solid rgba(200,160,80,0.15)",borderRadius:7,
             padding:"7px 12px",fontSize:9,fontWeight:600,cursor:isP&&!animating?"pointer":"default",
@@ -1913,9 +1951,18 @@ export default function App(){
             </div>
             <div style={{display:"flex",gap:12,justifyContent:"center"}}>
               <button disabled={!tradeSel}
-                onClick={()=>{
+                onClick={async()=>{
                   const selCard=hand.find(c=>c.uid===tradeSel);
                   if(!selCard)return;
+                  // Alex evaluates the offered card — declines weak ones more often
+                  const weakCards=["energy","spy","perebor"];
+                  const isWeak=weakCards.includes(selCard.type);
+                  const willDecline=isWeak?Math.random()<0.65:Math.random()<0.15;
+                  if(willDecline){
+                    setTradeOffer(null);setTradeSel(null);
+                    await alexSpeak("trade_declined",gs);
+                    return;
+                  }
                   setHand(h=>[...h.filter(c=>c.uid!==tradeSel),{uid:nuid(),type:tradeOffer.type,flipIn:true}]);
                   setTimeout(()=>setHand(h=>h.map(c=>({...c,flipIn:false}))),700);
                   setAlexHand(h=>[...h.filter((_,i)=>i!==tradeOffer.idx),selCard.type]);
