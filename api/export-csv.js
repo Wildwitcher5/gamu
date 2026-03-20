@@ -1,89 +1,84 @@
 import { prisma } from '../lib/prisma.js';
 
-const COLUMN_MAP = [
-  // Условие и группа — первыми, для фильтрации в Excel/SPSS/jamovi/R
-  ["condition",        "Условие"],          // cond_1 / cond_2 / cond_3 / cond_4
-  ["s1_ingroup",       "Группа участника"], // approve / disapprove
-
-  // Демография
-  ["dem_gender",       "Пол"],
-  ["dem_age",          "Возраст"],
-  ["dem_education",    "Образование"],
-  ["dem_income",       "Доход"],
-
-  // Политическая позиция
-  ["s1_direction",     "Позиция по России до (1-5)"],
-
-  // Индексы поляризации до игры
-  ["s1_polar_index",   "Поляризация до игры"],
-  ["s1_traits_diff",   "Черты: разность до"],
-  ["s1_affect_diff",   "Термометр: разность до"],
-  ["s1_dist_diff",     "Дистанция: разность до"],
-  ["s1_coop_diff",     "Кооперация: разность до"],
-  ["s1_repr_diff",     "Репрессии: разность до"],
-  ["s1_threat_diff",   "Угроза: разность до"],
-
-  // Термометр сырой до (4 значения — нужны для перепроверки)
-  ["s1_affect_out",    "Термометр аутГ до"],
-  ["s1_affect_in",     "Термометр инГ до"],
-  ["s2_affect_out",    "Термометр аутГ после"],
-  ["s2_affect_in",     "Термометр инГ после"],
-
-  // Индексы поляризации после игры
-  ["s2_polar_index",   "Поляризация после игры"],
-  ["s2_traits_diff",   "Черты: разность после"],
-  ["s2_affect_diff",   "Термометр: разность после"],
-  ["s2_dist_diff",     "Дистанция: разность после"],
-  ["s2_coop_diff",     "Кооперация: разность после"],
-  ["s2_repr_diff",     "Репрессии: разность после"],
-  ["s2_threat_diff",   "Угроза: разность после"],
-
-  // Дельты — главные переменные для ANOVA
-  ["delta_polar",      "Δ Поляризация"],
-  ["delta_traits",     "Δ Черты"],
-  ["delta_affect",     "Δ Термометр"],
-  ["delta_dist",       "Δ Дистанция"],
-  ["delta_coop",       "Δ Кооперация"],
-  ["delta_repr",       "Δ Репрессии"],
-  ["delta_threat",     "Δ Угроза"],
-
-  // Игра
-  ["game_enjoyment",   "Оценка игры"],
-  ["game_engagement",  "Вовлечённость"],
-  ["game_frequency",   "Частота игр"],
-  ["game_guess",       "Догадка об исследовании"],
+const EXPORT_COLUMNS = [
+  "session_id", "status", "ts_s1_start", "ts_s1_end", "ts_game_end", "ts_s2_end", "condition",
+  "dem_gender", "dem_age", "dem_education", "dem_income",
+  "nick_self", "ally_nick",
+  "s1_direction", "s1_ingroup",
+  ...Array.from({ length: 6 }, (_, i) => `s1_traits_out_${i + 1}`),
+  ...Array.from({ length: 6 }, (_, i) => `s1_traits_in_${i + 1}`),
+  "s1_affect_out", "s1_affect_in",
+  ...Array.from({ length: 4 }, (_, i) => `s1_dist_out_${i + 1}`),
+  ...Array.from({ length: 4 }, (_, i) => `s1_dist_in_${i + 1}`),
+  ...Array.from({ length: 4 }, (_, i) => `s1_coop_out_${i + 1}`),
+  ...Array.from({ length: 4 }, (_, i) => `s1_coop_in_${i + 1}`),
+  ...Array.from({ length: 5 }, (_, i) => `s1_repr_out_${i + 1}`),
+  ...Array.from({ length: 5 }, (_, i) => `s1_repr_in_${i + 1}`),
+  ...Array.from({ length: 4 }, (_, i) => `s1_threat_out_${i + 1}`),
+  ...Array.from({ length: 4 }, (_, i) => `s1_threat_in_${i + 1}`),
+  ...Array.from({ length: 4 }, (_, i) => `s1_contact_out_${i + 1}`),
+  ...Array.from({ length: 4 }, (_, i) => `s1_contact_in_${i + 1}`),
+  "s1_traits_in_mean", "s1_traits_out_mean", "s1_traits_diff",
+  "s1_affect_diff",
+  "s1_dist_in_mean", "s1_dist_out_mean", "s1_dist_diff",
+  "s1_coop_in_mean", "s1_coop_out_mean", "s1_coop_diff",
+  "s1_repr_in_mean", "s1_repr_out_mean", "s1_repr_diff",
+  "s1_threat_in_mean", "s1_threat_out_mean", "s1_threat_diff",
+  "s1_polar_index",
+  "s2_direction", "s2_ingroup",
+  ...Array.from({ length: 6 }, (_, i) => `s2_traits_out_${i + 1}`),
+  ...Array.from({ length: 6 }, (_, i) => `s2_traits_in_${i + 1}`),
+  "s2_affect_out", "s2_affect_in",
+  ...Array.from({ length: 4 }, (_, i) => `s2_dist_out_${i + 1}`),
+  ...Array.from({ length: 4 }, (_, i) => `s2_dist_in_${i + 1}`),
+  ...Array.from({ length: 4 }, (_, i) => `s2_coop_out_${i + 1}`),
+  ...Array.from({ length: 4 }, (_, i) => `s2_coop_in_${i + 1}`),
+  ...Array.from({ length: 5 }, (_, i) => `s2_repr_out_${i + 1}`),
+  ...Array.from({ length: 5 }, (_, i) => `s2_repr_in_${i + 1}`),
+  ...Array.from({ length: 4 }, (_, i) => `s2_threat_out_${i + 1}`),
+  ...Array.from({ length: 4 }, (_, i) => `s2_threat_in_${i + 1}`),
+  "s2_traits_in_mean", "s2_traits_out_mean", "s2_traits_diff",
+  "s2_affect_diff",
+  "s2_dist_in_mean", "s2_dist_out_mean", "s2_dist_diff",
+  "s2_coop_in_mean", "s2_coop_out_mean", "s2_coop_diff",
+  "s2_repr_in_mean", "s2_repr_out_mean", "s2_repr_diff",
+  "s2_threat_in_mean", "s2_threat_out_mean", "s2_threat_diff",
+  "s2_polar_index",
+  "delta_polar", "delta_traits", "delta_affect",
+  "delta_dist", "delta_coop", "delta_repr", "delta_threat",
+  "game_enjoyment", "game_engagement", "game_frequency", "game_guess",
 ];
-// Итого: 37 колонок
 
-function escapeCell(val) {
-  if (val === null || val === undefined) return "";
-  return `"${String(val).replace(/"/g, '""')}"`;
+function escapeCell(value) {
+  if (value == null) return '""';
+  return `"${String(value).replace(/"/g, '""')}"`;
 }
 
 export default async function handler(req, res) {
   if (req.query.secret !== process.env.ADMIN_SECRET) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const rows = await prisma.response.findMany({
-    where: { status: "complete" },
-    orderBy: { created_at: "asc" },
-    select: { data: true },
-  });
+  try {
+    const rows = await prisma.response.findMany({
+      where:   { status: 'complete' },
+      orderBy: { created_at: 'asc' },
+      select:  { data: true },
+    });
 
-  if (rows.length === 0) return res.status(200).send("No data");
+    if (rows.length === 0) return res.status(200).send('No completed responses yet.');
 
-  const allData = rows.map(r => r.data);
-  const keys    = COLUMN_MAP.map(([k]) => k);
-  const labels  = COLUMN_MAP.map(([, l]) => l);
+    const bom = '\uFEFF';
+    const csv = [
+      EXPORT_COLUMNS.join(','),
+      ...rows.map(row => EXPORT_COLUMNS.map(col => escapeCell((row.data ?? {})[col])).join(',')),
+    ].join('\r\n');
 
-  const bom = "\uFEFF";
-  const csvRows = [
-    labels.map(l => `"${l}"`).join(","),
-    ...allData.map(row => keys.map(k => escapeCell(row[k])).join(",")),
-  ];
-
-  res.setHeader("Content-Type", "text/csv; charset=utf-8");
-  res.setHeader("Content-Disposition", 'attachment; filename="responses_clean.csv"');
-  return res.status(200).send(bom + csvRows.join("\r\n"));
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="responses.csv"');
+    return res.status(200).send(bom + csv);
+  } catch (err) {
+    console.error('export-csv error:', err);
+    return res.status(500).json({ error: 'Database error' });
+  }
 }
