@@ -165,7 +165,7 @@ let _uid=0;
 const nuid=()=>String(++_uid);
 const rnd=n=>Math.floor(Math.random()*n);
 const cl=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
-// en() is now defined inside App() using enemyNames state
+// en() is now defined inside App() using e1Nick/e2Nick state
 
 // Subset matching: played cards must contain all needed types (may have extras)
 function detectCombo(played){
@@ -480,7 +480,7 @@ function CardPreview({card,gs,onApply,onTarget,onClose,isP,odLeft,alreadySel,en}
 }
 
 /* Enemy card animation overlay — shows one enemy at a time */
-function EnemyCardShow({enemyCard}){
+function EnemyCardShow({enemyCard,e1Nick,e2Nick}){
   const {e1,e2}=enemyCard;
   const actor=e1?"e1":e2?"e2":null;
   const type=actor?enemyCard[actor]:null;
@@ -500,7 +500,7 @@ function EnemyCardShow({enemyCard}){
         animation:"enemyActIn 0.45s cubic-bezier(.15,1.1,.3,1)"}}>
         <div style={{fontSize:16,fontWeight:900,letterSpacing:4,color,fontFamily:"Georgia,serif",
           textShadow:`0 0 28px ${color}dd,0 2px 10px rgba(0,0,0,0.95)`}}>
-          {isE1?"⚔ СТРАЖНИК ДЕЙСТВУЕТ":"🌑 ЛАЗУТЧИК ДЕЙСТВУЕТ"}
+          {isE1?`⚔ ${(e1Nick||"Стражник").toUpperCase()} ДЕЙСТВУЕТ`:`🌑 ${(e2Nick||"Лазутчик").toUpperCase()} ДЕЙСТВУЕТ`}
         </div>
         <div style={{position:"relative",width:W,height:H,
           filter:`drop-shadow(0 0 30px ${def.c}bb)drop-shadow(0 0 12px rgba(0,0,0,0.95))`}}>
@@ -549,7 +549,7 @@ function Bubble({m,nick}){
   );
 }
 
-function LogLine({text}){
+function LogLine({text,e1Nick="Стражник",e2Nick="Лазутчик"}){
   if(text.startsWith("──")){
     return(
       <div style={{display:"flex",alignItems:"center",gap:6,padding:"4px 0",opacity:0.5}}>
@@ -572,7 +572,7 @@ function LogLine({text}){
     icon="🛡️";color="#4c7fe0";
   } else if(text.includes("Ты")){
     icon="⚔️";color="#6090e0";
-  } else if(text.includes("Стражник")||text.includes("Лазутчик")||text.includes("ВРАГИ")){
+  } else if(text.includes(e1Nick)||text.includes(e2Nick)||text.includes("ВРАГИ")){
     icon="⚔️";color="#a04040";
   } else {
     icon="▸";color="#5a4a30";
@@ -805,8 +805,9 @@ export default function App(){
   const [gameAvatars,setGameAvatars]=useState(null); // {avatar_partner, avatar_opponent_1, avatar_opponent_2}
   const [allyNick,setAllyNick]=useState(()=>localStorage.getItem("ally_nick")||"Союзник");
   const [allyPersona,setAllyPersona]=useState(null);
-  const [enemyNames,setEnemyNames]=useState({e1:"Стражник",e2:"Лазутчик"});
-  const en=k=>enemyNames[k]??(k==="e1"?"Стражник":"Лазутчик");
+  const [e1Nick,setE1Nick]=useState(()=>localStorage.getItem("e1_nick")||"Стражник");
+  const [e2Nick,setE2Nick]=useState(()=>localStorage.getItem("e2_nick")||"Лазутчик");
+  const en=k=>k==="e1"?e1Nick:e2Nick;
   const [trapTrigger,setTrapTrigger]=useState(null);
   const [counterTrigger,setCounterTrigger]=useState(null);
   const lastAlexSpeakRef=useRef(0);
@@ -845,6 +846,8 @@ export default function App(){
       const ingroup=session.s1_ingroup??(session.ingroup??"");
       setAllyPersona(selectPersona(session.condition,ingroup));
     }
+    if(session?.e1_nick) setE1Nick(session.e1_nick);
+    if(session?.e2_nick) setE2Nick(session.e2_nick);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[]);
 
@@ -1491,7 +1494,7 @@ export default function App(){
         </div>)}
 
       {/* Enemy card animation */}
-      <EnemyCardShow enemyCard={enemyCard}/>
+      <EnemyCardShow enemyCard={enemyCard} e1Nick={e1Nick} e2Nick={e2Nick}/>
 
       {/* Trap and counter animations */}
       <TrapAnimation trigger={trapTrigger}/>
@@ -1667,7 +1670,7 @@ export default function App(){
               <div style={{fontSize:9,letterSpacing:2,color:"#4a3010",marginBottom:5,fontFamily:"Georgia,serif"}}>ЛОГ БИТВЫ</div>
               <div style={{maxHeight:300,overflowY:"auto",paddingRight:4,minHeight:120}}>
                 {log.length===0?<div style={{fontSize:11,color:"#2a2010",fontFamily:"Georgia,serif"}}>— бой начинается —</div>
-                  :log.slice(-60).map((l,i)=><LogLine key={i} text={l}/>)}
+                  :log.slice(-60).map((l,i)=><LogLine key={i} text={l} e1Nick={e1Nick} e2Nick={e2Nick}/>)}
                 <div ref={logEnd}/>
               </div>
             </div>
@@ -2116,22 +2119,23 @@ export default function App(){
         setAllyPersona(persona);
         setAllyNick(nick);
         localStorage.setItem("ally_nick", nick);
-        /* stamp condition + avatars + nick into the session record */
+        /* pick enemy nicks from the same persona pool, excluding ally nick */
+        const enemyNickList = persona.NICKNAMES.filter(n => n !== nick);
+        const e1n = enemyNickList[Math.floor(Math.random() * enemyNickList.length)];
+        const e2n = enemyNickList.filter(n => n !== e1n)[Math.floor(Math.random() * (enemyNickList.length - 1))];
+        setE1Nick(e1n);
+        setE2Nick(e2n);
+        localStorage.setItem("e1_nick", e1n);
+        localStorage.setItem("e2_nick", e2n);
+        /* stamp condition + avatars + nicks into the session record */
         const session = getCurrentSession();
         if(session){
           const updated = {...session, condition:cond, avatar_self:playerAvatar,
-            nick_self:playerName, ally_nick:nick, ...avatars};
+            nick_self:playerName, ally_nick:nick, e1_nick:e1n, e2_nick:e2n, ...avatars};
           saveCurrentSession(updated);
           upsertResponse(updated);
         }
         setShowCondBrief(true);
-        fetch("/api/generate-names",{
-          method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({condition:cond,ingroup:data.ingroup}),
-        }).then(r=>r.json()).then(names=>{
-          if(names.e1&&names.e2)setEnemyNames(names);
-        }).catch(()=>{});
       }}/>}
 
       {/* Post-game survey — shown after game ends, above game-over screen */}
