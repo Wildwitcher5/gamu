@@ -337,7 +337,7 @@ function DeckStack({count,fatigueCycle}){
   const fpCard=fpCycle(fatigueCycle);
   const layers=count>=12?5:count>=7?3:count>=3?2:count>=1?1:0;
   const W=54,H=76;
-  const tip=`Осталось ${count} карт. Цикл: ${fatigueCycle}. Изнурение: ${fpCard} HP за карту`;
+  const tip=`Осталось ${count} карт. Цикл: ${fatigueCycle}. Изнурение: ${fpCard} здоровья за карту`;
   if(count===0)return(
     <div title={tip} style={{width:W,height:H+22,display:"flex",flexDirection:"column",
       alignItems:"center",justifyContent:"center",gap:4,flexShrink:0}}>
@@ -595,8 +595,8 @@ function EffectBadge({type,stacks,color,bg,border}){
   const [tip,setTip]=useState(false);
   const totalDmg=type==="poison"?stacks*5:stacks*3;
   const tipText=type==="poison"
-    ?`Яд: осталось ${stacks} тиков\nЕщё −${totalDmg} HP суммарно`
-    :`Кровотечение: осталось ${stacks} тиков\nЕщё −${totalDmg} HP суммарно`;
+    ?`Яд: осталось ${stacks} тиков\nЕщё −${totalDmg} здоровья суммарно`
+    :`Кровотечение: осталось ${stacks} тиков\nЕщё −${totalDmg} здоровья суммарно`;
   return(
     <div style={{position:"relative",display:"inline-flex",alignItems:"center",gap:3,
       background:bg,border:`1px solid ${border}`,
@@ -1160,13 +1160,13 @@ export default function App(){
       const r1=pickCard(newE1h);newE1h=r1.newHand;e1Card=r1.card;
       const r2=pickCard(newE2h);newE2h=r2.newHand;e2Card=r2.card;
       const tgt=ng.you.hp<=ng.alex.hp?"you":"alex";let d=22;
-      if(tgt==="you"&&ng.you.counter){ng.you={...ng.you,counter:false};ng.e1={...ng.e1,hp:cl(ng.e1.hp-d,0,999)};hit("e1",d);logs.push(`↩️ Контрудар! Страж −${d}HP`);d=0;}
-      if(d>0&&ng.you.jcounter){const ret=Math.floor(d/2);ng.e1={...ng.e1,hp:cl(ng.e1.hp-ret,0,999)};hit("e1",ret);logs.push(`🔰 КОНТРУДАР! Совм. удар отменён! Страж −${ret}HP`);ng.you={...ng.you,jcounter:null};d=0;}
+      if(tgt==="you"&&ng.you.counter){ng.you={...ng.you,counter:false};ng.e1={...ng.e1,hp:cl(ng.e1.hp-d,0,999)};hit("e1",d);logs.push(`↩️ Контрудар! ${en("e1")} −${d}HP`);d=0;}
+      if(d>0&&ng.you.jcounter){const ret=Math.floor(d/2);ng.e1={...ng.e1,hp:cl(ng.e1.hp-ret,0,999)};hit("e1",ret);logs.push(`🔰 КОНТРУДАР! Совм. удар отменён! ${en("e1")} −${ret}HP`);ng.you={...ng.you,jcounter:null};d=0;}
       if(d>0){ng[tgt]={...ng[tgt],hp:cl(ng[tgt].hp-d,0,ng[tgt].maxHp)};hit(tgt,d);logs.push(`💥 ВРАГИ: Совм. удар → ${tgt==="you"?"тебя":"Союзника"}: −${d}!`);}
-      const fdJ=fpCycle(cycleIn);if(fdJ>0){if(ng.e1.hp>0){ng.e1={...ng.e1,hp:cl(ng.e1.hp-fdJ,0,ng.e1.maxHp)};hit("e1",fdJ);logs.push(`Страж 😓 изнурение: −${fdJ}HP`);}if(ng.e2.hp>0){ng.e2={...ng.e2,hp:cl(ng.e2.hp-fdJ,0,ng.e2.maxHp)};hit("e2",fdJ);logs.push(`Тень 😓 изнурение: −${fdJ}HP`);}}
+      const fdJ=fpCycle(cycleIn);if(fdJ>0){if(ng.e1.hp>0){ng.e1={...ng.e1,hp:cl(ng.e1.hp-fdJ,0,ng.e1.maxHp)};hit("e1",fdJ);logs.push(`${en("e1")} 😓 изнурение: −${fdJ}HP`);}if(ng.e2.hp>0){ng.e2={...ng.e2,hp:cl(ng.e2.hp-fdJ,0,ng.e2.maxHp)};hit("e2",fdJ);logs.push(`${en("e2")} 😓 изнурение: −${fdJ}HP`);}}
     } else {
-      if(ng.e1.hp>0){const r=pickCard(newE1h);e1Card=r.card;newE1h=r.newHand;applyEnemyCard(r.card,"e1");const fd1=fpCycle(cycleIn);if(fd1>0&&ng.e1.hp>0){ng.e1={...ng.e1,hp:cl(ng.e1.hp-fd1,0,ng.e1.maxHp)};hit("e1",fd1);logs.push(`Страж 😓 изнурение: −${fd1}HP`);}}
-      if(ng.e2.hp>0){const r=pickCard(newE2h);e2Card=r.card;newE2h=r.newHand;applyEnemyCard(r.card,"e2");const fd2=fpCycle(cycleIn);if(fd2>0&&ng.e2.hp>0){ng.e2={...ng.e2,hp:cl(ng.e2.hp-fd2,0,ng.e2.maxHp)};hit("e2",fd2);logs.push(`Тень 😓 изнурение: −${fd2}HP`);}}
+      if(ng.e1.hp>0){const r=pickCard(newE1h);e1Card=r.card;newE1h=r.newHand;applyEnemyCard(r.card,"e1");const fd1=fpCycle(cycleIn);if(fd1>0&&ng.e1.hp>0){ng.e1={...ng.e1,hp:cl(ng.e1.hp-fd1,0,ng.e1.maxHp)};hit("e1",fd1);logs.push(`${en("e1")} 😓 изнурение: −${fd1}HP`);}}
+      if(ng.e2.hp>0){const r=pickCard(newE2h);e2Card=r.card;newE2h=r.newHand;applyEnemyCard(r.card,"e2");const fd2=fpCycle(cycleIn);if(fd2>0&&ng.e2.hp>0){ng.e2={...ng.e2,hp:cl(ng.e2.hp-fd2,0,ng.e2.maxHp)};hit("e2",fd2);logs.push(`${en("e2")} 😓 изнурение: −${fd2}HP`);}}
     }
     // Poison + bleed ticks
     for(const k of["you","alex","e1","e2"]){
@@ -1194,7 +1194,7 @@ export default function App(){
       const pool=ALEX_ACTION_MAP[a.type]??["attack"];
       const usedIdx=newAlexH.findIndex(t=>pool.includes(t));
       if(usedIdx>=0){newAlexH=newAlexH.filter((_,i)=>i!==usedIdx);const{types:[nc],deck:nd,cycle:ncy}=drawRaw(1,capDeck,capCycle);capDeck=nd;capCycle=ncy;newAlexH=[...newAlexH,nc];}
-      if(a.type==="attack"){const t2=[g.e1.hp>0?"e1":null,g.e2.hp>0?"e2":null].find(Boolean);if(t2){const d=8;g[t2]={...g[t2],hp:cl(g[t2].hp-d,0,999)};doEvent(t2,d,`⚔ Союзник → ${en(t2)} −${d} HP`,'#40c0ff');logs.push(`Союзник ⚔️→${en(t2)}: −${d}`);}}
+      if(a.type==="attack"){const t2=(a.target&&g[a.target]?.hp>0)?a.target:["e1","e2"].find(k=>g[k].hp>0);if(t2){const d=8;g[t2]={...g[t2],hp:cl(g[t2].hp-d,0,999)};doEvent(t2,d,`⚔ Союзник → ${en(t2)} −${d} HP`,'#40c0ff');logs.push(`Союзник ⚔️→${en(t2)}: −${d}`);}}
       else if(a.type==="shield"){if(g.alex.hp>0){g.alex={...g.alex,hp:cl(g.alex.hp+10,0,g.alex.maxHp)};doEvent("alex",10,"🛡 Союзник: Щит → +10 HP",'#60d080',true);logs.push("Союзник 🛡️: +10HP");}}
       else if(a.type==="heal"){g.you={...g.you,hp:cl(g.you.hp+12,0,g.you.maxHp)};doEvent("you",12,"💉 Союзник: Исцелить → Ты +12 HP",'#60d080',true);logs.push("Союзник 💉→тебя: +12HP");}
     }
@@ -1304,6 +1304,7 @@ export default function App(){
     const allyLow=g.alex.hp<MHP.alex*0.35||g.you.hp<MHP.you*0.35;
     if(Math.random()<0.25){setThinking(t=>({...t,alex:true}));await dly(1500+rnd(1500));setThinking(t=>({...t,alex:false}));}
     const ar=await alexTurnAPI(g,"",allyLow);
+    if(ar.message&&ar.message.trim())addChat("alex",ar.message);
     let newAlexH=[...alexHand];
     const alexActionType=ar.actions?.[0]?.type??"";
     for(const a of(ar.actions??[]).slice(0,1)){
@@ -1392,6 +1393,8 @@ export default function App(){
 
   /* ── Alex turn action — strategic decision + DeepSeek message ───────── */
   const alexTurnAPI=async(g,_lm,allyLow)=>{
+    // Dead ally does nothing
+    if(g.alex.hp<=0)return{message:"",actions:[]};
     const alive=["e1","e2"].filter(k=>g[k].hp>0);
     const weakest=alive.length>0?alive.reduce((a,b)=>g[a].hp<=g[b].hp?a:b):null;
     const hasCard=types=>types.some(t=>alexHand.includes(t));
@@ -1814,7 +1817,7 @@ export default function App(){
 
           {/* HP + player effects */}
           <div data-entity="you" style={{display:"flex",flexDirection:"column",gap:4,minWidth:150}}>
-            <div style={{fontSize:9,letterSpacing:1,color:"#4a3010",fontFamily:"Georgia,serif"}}>HP ИГРОКА</div>
+            <div style={{fontSize:9,letterSpacing:1,color:"#4a3010",fontFamily:"Georgia,serif"}}>ЗДОРОВЬЕ</div>
             <HpBar hp={gs.you.hp} maxHp={MHP.you} color="#4c7fe0" flash={flash.you}/>
             <EffectBadges poison={gs.you.poison} bleed={gs.you.bleed}/>
             {gs.you.hp<=0&&<div style={{fontSize:9,color:"#e05252",fontFamily:"Georgia,serif",
@@ -2122,7 +2125,8 @@ export default function App(){
         /* pick enemy nicks from the same persona pool, excluding ally nick */
         const enemyNickList = persona.NICKNAMES.filter(n => n !== nick);
         const e1n = enemyNickList[Math.floor(Math.random() * enemyNickList.length)];
-        const e2n = enemyNickList.filter(n => n !== e1n)[Math.floor(Math.random() * (enemyNickList.length - 1))];
+        const e2nPool = enemyNickList.filter(n => n !== e1n);
+        const e2n = e2nPool.length > 0 ? e2nPool[Math.floor(Math.random() * e2nPool.length)] : "Лазутчик";
         setE1Nick(e1n);
         setE2Nick(e2n);
         localStorage.setItem("e1_nick", e1n);
