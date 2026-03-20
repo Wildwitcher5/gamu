@@ -549,12 +549,14 @@ function Bubble({m,nick}){
   );
 }
 
-function LogLine({text,e1Nick="Стражник",e2Nick="Лазутчик"}){
-  if(text.startsWith("──")){
+function LogLine({text,e1Nick="Стражник",e2Nick="Лазутчик",allyNick="Союзник"}){
+  // Replace internal "Союзник" key with the actual ally nickname for display
+  const displayText=allyNick!=="Союзник"?text.replace(/Союзник/g,allyNick):text;
+  if(displayText.startsWith("──")){
     return(
       <div style={{display:"flex",alignItems:"center",gap:6,padding:"4px 0",opacity:0.5}}>
         <div style={{flex:1,borderTop:"1px solid rgba(200,160,80,0.07)"}}/>
-        <span style={{fontSize:8,color:"#2a1808",fontFamily:"Georgia,serif",whiteSpace:"nowrap"}}>{text}</span>
+        <span style={{fontSize:8,color:"#2a1808",fontFamily:"Georgia,serif",whiteSpace:"nowrap"}}>{displayText}</span>
         <div style={{flex:1,borderTop:"1px solid rgba(200,160,80,0.07)"}}/>
       </div>
     );
@@ -582,7 +584,7 @@ function LogLine({text,e1Nick="Стражник",e2Nick="Лазутчик"}){
       padding:"3px 0",fontFamily:"Georgia,serif",
       borderBottom:"1px solid rgba(255,255,255,0.03)",fontWeight:fw,lineHeight:1.45}}>
       <span style={{flexShrink:0,minWidth:16,textAlign:"center"}}>{icon}</span>
-      <span>{text}</span>
+      <span>{displayText}</span>
     </div>
   );
 }
@@ -988,7 +990,7 @@ export default function App(){
   const alexSpeak=async(eventType,g)=>{
     const now=Date.now();
     const forceSpeak=["trade_offer","victory","defeat","trade_accepted","trade_declined","ally_down","revived"].includes(eventType);
-    if(!forceSpeak&&now-lastAlexSpeakRef.current<14000)return;
+    if(!forceSpeak&&now-lastAlexSpeakRef.current<22000)return;
     lastAlexSpeakRef.current=now;
     const persona=allyPersona;
     const nick=allyNick;
@@ -1343,8 +1345,8 @@ export default function App(){
     setGs(g);addLog(`── Ход ${turn} завершён ──`);logs.forEach(addLog);
     setOd(cl(2+nob-drawCooldown,1,4));setOdBank(0);setDrawCooldown(0);
     setE1Hand(newE1h);setE2Hand(newE2h);setAlexHand(newAlexH);
-    // Situational alexSpeak (non-blocking, 55% chance to avoid every-turn spam)
-    if(Math.random()<0.55){
+    // Situational alexSpeak (non-blocking, 30% chance to avoid every-turn spam)
+    if(Math.random()<0.3){
       const enemyLow=["e1","e2"].some(k=>g[k].hp>0&&g[k].hp<MHP[k]*0.3);
       const heavyHit=(eh.you??0)>=15;
       if(heavyHit)setTimeout(()=>alexSpeak("took_heavy_hit",g),500);
@@ -1353,7 +1355,7 @@ export default function App(){
     }
     // Alex proactively suggests joint strike (20% chance if has joint card and enemies alive)
     {const aliveAfter=["e1","e2"].filter(k=>g[k].hp>0);
-    if(newAlexH.includes("joint")&&aliveAfter.length>0&&Math.random()<0.2&&!tradeOffer){
+    if(newAlexH.includes("joint")&&aliveAfter.length>0&&Math.random()<0.08&&!tradeOffer){
       const weakestE=aliveAfter.reduce((a,b)=>g[a].hp<=g[b].hp?a:b);
       setTimeout(async()=>{
         if(!allyPersona)return;
@@ -1406,8 +1408,8 @@ export default function App(){
     else if(g.you.hp<55&&g.alex.hp>40&&Math.random()<0.25&&hasCard(["healAlex","revive","energy"])){actionType="heal";}
     else if(weakest){actionType="attack";actionTarget=weakest;}
     else{actionType="shield";}
-    // 40% chance to stay silent — not every action needs commentary
-    if(Math.random()<0.4){
+    // 60% chance to stay silent — not every action needs commentary
+    if(Math.random()<0.6){
       return{message:"",actions:[{type:actionType,target:actionTarget}]};
     }
     // Generate short situational message via DeepSeek
@@ -1673,7 +1675,7 @@ export default function App(){
               <div style={{fontSize:9,letterSpacing:2,color:"#4a3010",marginBottom:5,fontFamily:"Georgia,serif"}}>ЛОГ БИТВЫ</div>
               <div style={{maxHeight:300,overflowY:"auto",paddingRight:4,minHeight:120}}>
                 {log.length===0?<div style={{fontSize:11,color:"#2a2010",fontFamily:"Georgia,serif"}}>— бой начинается —</div>
-                  :log.slice(-60).map((l,i)=><LogLine key={i} text={l} e1Nick={e1Nick} e2Nick={e2Nick}/>)}
+                  :log.slice(-60).map((l,i)=><LogLine key={i} text={l} e1Nick={e1Nick} e2Nick={e2Nick} allyNick={allyNick}/>)}
                 <div ref={logEnd}/>
               </div>
             </div>

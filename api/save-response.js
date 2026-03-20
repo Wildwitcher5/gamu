@@ -5,6 +5,7 @@ export default async function handler(req, res) {
 
   const { session_id, status, data } = req.body;
   if (!session_id) return res.status(400).json({ error: 'session_id required' });
+  if (!data) return res.status(400).json({ error: 'data required' });
 
   try {
     await prisma.response.upsert({
