@@ -747,8 +747,53 @@ function ConditionBriefScreen({ condition, ingroup, partnerAvatar, allyNick, onS
   );
 }
 
+/* ── Matchmaking screen ─────────────────────────────────────────────── */
+function MatchmakingScreen({onReady}){
+  const [found,setFound]=useState(false);
+  const [tick,setTick]=useState(0);
+  useEffect(()=>{
+    const delay=10000+Math.floor(Math.random()*20001); // 10–30 s
+    const t1=setTimeout(()=>setFound(true),delay);
+    const t2=setTimeout(()=>onReady(),delay+1800);
+    const ti=setInterval(()=>setTick(n=>n+1),500);
+    return()=>{clearTimeout(t1);clearTimeout(t2);clearInterval(ti);};
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[]);
+  const dots=".".repeat((tick%3)+1);
+  return(
+    <div style={{position:"fixed",inset:0,zIndex:9000,
+      background:"radial-gradient(ellipse at center,#1a1005 0%,#0a0800 100%)",
+      display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:32}}>
+      <div style={{fontSize:13,letterSpacing:4,color:"#6a5030",fontFamily:"Georgia,serif",textTransform:"uppercase"}}>
+        Дружина
+      </div>
+      {!found?(
+        <>
+          <div style={{width:72,height:72,borderRadius:"50%",border:"3px solid #4a3010",
+            borderTopColor:"#c8a050",animation:"spin 1s linear infinite"}}/>
+          <div style={{fontSize:16,color:"#c8a050",fontFamily:"Georgia,serif",letterSpacing:1}}>
+            Ищём противников{dots}
+          </div>
+          <div style={{fontSize:11,color:"#5a4020",fontFamily:"Georgia,serif"}}>
+            Подбираем игроков по уровню
+          </div>
+        </>
+      ):(
+        <>
+          <div style={{fontSize:44,filter:"drop-shadow(0 0 12px #4caf82)"}}>⚔️</div>
+          <div style={{fontSize:18,color:"#4caf82",fontFamily:"Georgia,serif",fontWeight:700,letterSpacing:1}}>
+            Игра найдена!
+          </div>
+        </>
+      )}
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  );
+}
+
 export default function App(){
   const [showTutorial,setShowTutorial]=useState(()=>localStorage.getItem("tutorialDone")!=="true");
+  const [showMatchmaking,setShowMatchmaking]=useState(false);
   const [gameInit]=useState(createGameInit);
   const [gs,setGs]=useState(initGs);
   const [hand,setHand]=useState(gameInit.hand);
@@ -1369,8 +1414,8 @@ export default function App(){
         addChat("alex",msg);
       },1200);
     }}
-    // Trade offer (30% chance) — Alex prefers to trade away low-value cards
-    if(newAlexH.length>0&&!tradeOffer&&Math.random()<0.3){
+    // Trade offer (12% chance) — Alex prefers to trade away low-value cards
+    if(newAlexH.length>0&&!tradeOffer&&Math.random()<0.12){
       const lowValueCards=["energy","spy","perebor"];
       const preferredOffer=newAlexH.findIndex(t=>lowValueCards.includes(t));
       const oi=preferredOffer>=0?preferredOffer:rnd(newAlexH.length);
@@ -1432,10 +1477,13 @@ export default function App(){
   };
   const alexChatAPI=async(msg,g)=>{
     if(!allyPersona)return"Понял.";
+    const aliveEnemies=["e1","e2"].filter(k=>g?.[k]?.hp>0).map(k=>`${en(k)} ${g[k].hp}/100`);
+    const deadEnemies=["e1","e2"].filter(k=>g?.[k]?.hp<=0).map(k=>en(k));
     const ctx={
       allyHp:g?.alex?.hp??"?",
       youHp:g?.you?.hp??"?",
-      enemies:["e1","e2"].filter(k=>g?.[k]?.hp>0).map(k=>`${en(k)} ${g[k].hp}HP`).join(", ")||"повержены",
+      enemies:aliveEnemies.join(", ")||"все повержены",
+      dead:deadEnemies.length?deadEnemies.join(", "):"никто",
       hand:alexHand.map(type=>({
         name:CARDS[type]?.n??type,
         cost:CARDS[type]?.od??1,
@@ -2107,12 +2155,13 @@ export default function App(){
           ingroup={survey1Data.ingroup}
           partnerAvatar={gameAvatars?.avatar_partner}
           allyNick={allyNick}
-          onStart={()=>setShowCondBrief(false)}
+          onStart={()=>{setShowCondBrief(false);setShowMatchmaking(true);}}
         />
       )}
 
       {/* Tutorial overlay */}
-      {showTutorial&&!showSetup&&!showSurvey1&&!showCondBrief&&<Tutorial allyNick={allyNick} e1Nick={e1Nick} e2Nick={e2Nick} onEnd={()=>setShowTutorial(false)}/>}
+      {showMatchmaking&&<MatchmakingScreen onReady={()=>setShowMatchmaking(false)}/>}
+      {showTutorial&&!showSetup&&!showSurvey1&&!showCondBrief&&!showMatchmaking&&<Tutorial allyNick={allyNick} e1Nick={e1Nick} e2Nick={e2Nick} onEnd={()=>setShowTutorial(false)}/>}
 
       {/* Pre-game survey — shown after setup, before game */}
       {showSurvey1&&!showSetup&&<Survey type="pre" onComplete={data=>{
