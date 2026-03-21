@@ -114,10 +114,11 @@ const AVATARS=[
 const CONDITIONS = ["cond_1","cond_2","cond_3","cond_4"];
 function assignCondition() { return CONDITIONS[Math.floor(Math.random()*4)]; }
 
-function pickAvatar(folder) {
-  const files = AVATAR_MANIFEST[folder]?.length
+function pickAvatar(folder, exclude=[]) {
+  const files = (AVATAR_MANIFEST[folder]?.length
     ? AVATAR_MANIFEST[folder]
-    : (AVATAR_MANIFEST.neutral ?? []);
+    : (AVATAR_MANIFEST.neutral ?? [])
+  ).filter(f => !exclude.includes(`/avatars/${folder}/${f}`));
   if (!files.length) return null;
   return `/avatars/${folder}/${files[Math.floor(Math.random()*files.length)]}`;
 }
@@ -131,10 +132,13 @@ function assignAvatars(condition, ingroup) {
     condition === "cond_1" ? inFolder  :
     condition === "cond_2" ? outFolder :
     "neutral"; // cond_3 and cond_4
+  const partner    = pickAvatar(partnerFolder);
+  const opponent1  = pickAvatar(oppFolder, [partner].filter(Boolean));
+  const opponent2  = pickAvatar(oppFolder, [partner, opponent1].filter(Boolean));
   return {
-    avatar_partner:    pickAvatar(partnerFolder),
-    avatar_opponent_1: pickAvatar(oppFolder),
-    avatar_opponent_2: pickAvatar(oppFolder),
+    avatar_partner:    partner,
+    avatar_opponent_1: opponent1,
+    avatar_opponent_2: opponent2,
   };
 }
 
