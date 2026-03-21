@@ -2,19 +2,20 @@ import { useState, useEffect } from "react";
 
 const ARROW_IMG = "/assets/arrow.png";
 
-function getTutorialSteps(nick) {
+function getTutorialSteps(nick, e1, e2) {
   const n = nick || "Союзник";
-  return [
+  const en1 = e1 || "Страж";
+  const en2 = e2 || "Тень";
   {
     target: null,
     title: "Добро пожаловать в дружину",
-    text: `Ты и твой напарник ${n} сражаетесь против Стража и Тени. У каждого 100 здоровья. Победа — уничтожить обоих врагов. Поражение — только если погибнете оба.`,
+    text: `Ты и твой напарник ${n} сражаетесь против ${en1} и ${en2}. У каждого 100 здоровья. Победа — уничтожить обоих врагов. Поражение — только если погибнете оба.`,
     arrowDir: null,
   },
   {
     target: '[data-tutorial="enemies"]',
     title: "Твои враги",
-    text: "Страж и Тень действуют самостоятельно. Те же карты, та же колода — но они играют против вас. Под каждым именем видна полоска здоровья и сколько карт у него в руке.",
+    text: `${en1} и ${en2} действуют самостоятельно. Те же карты, та же колода — но они играют против вас. Под каждым именем видна полоска здоровья и сколько карт у него в руке.`,
     arrowDir: "up",
   },
   {
@@ -97,10 +98,8 @@ function getTutorialSteps(nick) {
     isLast: true,
   },
 ];}
-const TUTORIAL_STEPS = getTutorialSteps("Союзник");
-
-export default function Tutorial({ onEnd, allyNick }) {
-  const steps = getTutorialSteps(allyNick);
+export default function Tutorial({ onEnd, allyNick, e1Nick, e2Nick }) {
+  const steps = getTutorialSteps(allyNick, e1Nick, e2Nick);
   const [step, setStep] = useState(0);
   const [targetRect, setTargetRect] = useState(null);
   const [popupPos, setPopupPos] = useState({ top: "50%", left: "50%", transform: "translate(-50%, -50%)" });

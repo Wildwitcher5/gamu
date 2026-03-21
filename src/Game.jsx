@@ -2108,7 +2108,7 @@ export default function App(){
       )}
 
       {/* Tutorial overlay */}
-      {showTutorial&&!showSetup&&!showSurvey1&&!showCondBrief&&<Tutorial allyNick={allyNick} onEnd={()=>setShowTutorial(false)}/>}
+      {showTutorial&&!showSetup&&!showSurvey1&&!showCondBrief&&<Tutorial allyNick={allyNick} e1Nick={e1Nick} e2Nick={e2Nick} onEnd={()=>setShowTutorial(false)}/>}
 
       {/* Pre-game survey — shown after setup, before game */}
       {showSurvey1&&!showSetup&&<Survey type="pre" onComplete={data=>{
