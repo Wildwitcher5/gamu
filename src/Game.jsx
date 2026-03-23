@@ -863,7 +863,7 @@ export default function App(){
   const [counterTrigger,setCounterTrigger]=useState(null);
   const lastAlexSpeakRef=useRef(0);
 
-  useEffect(()=>{setChat([{from:"alex",text:"норм, давай играть)"}]);},[]);
+  useEffect(()=>{setChat([]);},[]);
   useEffect(()=>{chatEnd.current?.scrollIntoView({behavior:"smooth"});},[chat]);
   useEffect(()=>{logEnd.current?.scrollIntoView({behavior:"smooth"});},[log]);
   // Keep ref to latest skipTurn to avoid stale closure in auto-skip effect
