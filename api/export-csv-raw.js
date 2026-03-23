@@ -82,7 +82,6 @@ export default async function handler(req, res) {
 
   try {
     const rows = await prisma.response.findMany({
-      where:   { status: 'complete' },
       orderBy: { created_at: 'asc' },
       select:  { data: true },
     });

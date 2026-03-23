@@ -94,7 +94,7 @@ const RESHUFFLE_TEMPLATE = [
   "attack","attack","shield","poison",
   "bleed","rage","double","energy",
   "joint","trap","counter","attack",
-  "perebor",
+  "perebor","revive",
 ];
 const fpCycle=c=>c===1?0:c===2?3:c===3?6:10;
 const ALEX_ACTION_MAP={attack:["attack","double","rage","bleed"],shield:["shield","counter","trap"],heal:["healAlex","revive","energy"]};
@@ -862,6 +862,7 @@ export default function App(){
   const [trapTrigger,setTrapTrigger]=useState(null);
   const [counterTrigger,setCounterTrigger]=useState(null);
   const lastAlexSpeakRef=useRef(0);
+  const allyDownSentRef=useRef(false);
 
   useEffect(()=>{setChat([]);},[]);
   useEffect(()=>{chatEnd.current?.scrollIntoView({behavior:"smooth"});},[chat]);
@@ -1038,8 +1039,10 @@ export default function App(){
   /* ── alexSpeak — situational chat via DeepSeek (falls back to FALLBACKS) */
   const alexSpeak=async(eventType,g)=>{
     const now=Date.now();
+    if(eventType==="ally_down"){if(allyDownSentRef.current)return;allyDownSentRef.current=true;}
+    if(eventType==="revived"){allyDownSentRef.current=false;}
     const forceSpeak=["trade_offer","victory","defeat","trade_accepted","trade_declined","ally_down","revived"].includes(eventType);
-    if(!forceSpeak&&now-lastAlexSpeakRef.current<22000)return;
+    if(!forceSpeak&&now-lastAlexSpeakRef.current<30000)return;
     lastAlexSpeakRef.current=now;
     const persona=allyPersona;
     const nick=allyNick;
@@ -1305,12 +1308,12 @@ export default function App(){
     const stolenCards=[];
     for(const{card,target}of played){
       switch(card.type){
-        case"attack":{const d=8;g[target]={...g[target],hp:cl(g[target].hp-d,0,999)};doEvent(target,d,`⚔ Атака → ${en(target)} −${d} HP`,'#ff6060');logs.push(`Ты ⚔️→${en(target)}: −${d}`);break;}
+        case"attack":{const d=8;if(g[target]?.counter){g[target]={...g[target],counter:false};g.you={...g.you,hp:cl(g.you.hp-d,0,g.you.maxHp)};doEvent("you",d,`↩️ ${en(target)} Контр! −${d} HP тебе`,'#ff9040');logs.push(`↩️ ${en(target)} Контр → ты −${d}`);}else{g[target]={...g[target],hp:cl(g[target].hp-d,0,999)};doEvent(target,d,`⚔ Атака → ${en(target)} −${d} HP`,'#ff6060');logs.push(`Ты ⚔️→${en(target)}: −${d}`);}break;}
         case"shield":{g.you={...g.you,hp:cl(g.you.hp+10,0,g.you.maxHp)};doEvent("you",10,"💚 Щит → +10 HP",'#60d080',true);logs.push("Ты 🛡️: +10HP");break;}
         case"healAlex":{if(g.alex.hp>0){g.alex={...g.alex,hp:cl(g.alex.hp+12,0,g.alex.maxHp)};doEvent("alex",12,"💚 Исцелить → Союзник +12 HP",'#60d080',true);logs.push("Ты 💉→Союзник: +12HP");}break;}
         case"poison":{if(g[target].hp>0){g[target]={...g[target],poison:3};showBanner(`☠ Яд → ${en(target)}`,'#c060ff');logs.push(`Ты ☠️→${en(target)}: яд`);}break;}
         case"bleed":{if(g[target].hp>0){g[target]={...g[target],bleed:(g[target].bleed??0)+4};showBanner(`🩸 Кровотечение → ${en(target)}`,'#e04040');logs.push(`Ты 🩸→${en(target)}: кровотечение ×4`);}break;}
-        case"rage":{const d=18;g[target]={...g[target],hp:cl(g[target].hp-d,0,999)};doEvent(target,d,`🔥 Ярость → ${en(target)} −${d} HP`,'#ff6060');g.you={...g.you,hp:cl(g.you.hp-4,0,g.you.maxHp)};doEvent("you",4,"🔥 Отдача −4 HP",'#ff9040');logs.push(`Ты 🔥→${en(target)}: −${d} (−4HP себе)`);break;}
+        case"rage":{const d=18;if(g[target]?.counter){g[target]={...g[target],counter:false};g.you={...g.you,hp:cl(g.you.hp-d,0,g.you.maxHp)};doEvent("you",d,`↩️ ${en(target)} Контр! −${d} HP тебе`,'#ff9040');logs.push(`↩️ ${en(target)} Контр → ты −${d} (ярость)`);}else{g[target]={...g[target],hp:cl(g[target].hp-d,0,999)};doEvent(target,d,`🔥 Ярость → ${en(target)} −${d} HP`,'#ff6060');logs.push(`Ты 🔥→${en(target)}: −${d} (−4HP себе)`);}g.you={...g.you,hp:cl(g.you.hp-4,0,g.you.maxHp)};doEvent("you",4,"🔥 Отдача −4 HP",'#ff9040');break;}
         case"energy":{nob=2;showBanner("⚡ Энергия → +2 ОД на следующий ход",'#e8d090');logs.push("Ты ⚡: +2ОД на след. ход");break;}
         case"trap":{g.you={...g.you,trap:true};showBanner("🪤 Ловушка установлена",'#e8d090');logs.push("Ты 🪤: Ловушка установлена");break;}
         case"counter":{g.you={...g.you,counter:true};showBanner("↩️ Контрудар готов",'#e8d090');logs.push("Ты ↩️: Контрудар готов");break;}
@@ -1394,8 +1397,8 @@ export default function App(){
     setGs(g);addLog(`── Ход ${turn} завершён ──`);logs.forEach(addLog);
     setOd(cl(2+nob-drawCooldown,1,4));setOdBank(0);setDrawCooldown(0);
     setE1Hand(newE1h);setE2Hand(newE2h);setAlexHand(newAlexH);
-    // Situational alexSpeak (non-blocking, 30% chance to avoid every-turn spam)
-    if(Math.random()<0.3){
+    // Situational alexSpeak (non-blocking, 15% chance to avoid every-turn spam)
+    if(Math.random()<0.15){
       const enemyLow=["e1","e2"].some(k=>g[k].hp>0&&g[k].hp<MHP[k]*0.3);
       const heavyHit=(eh.you??0)>=15;
       if(heavyHit)setTimeout(()=>alexSpeak("took_heavy_hit",g),500);
@@ -1414,8 +1417,8 @@ export default function App(){
         addChat("alex",msg);
       },1200);
     }}
-    // Trade offer (12% chance) — Alex prefers to trade away low-value cards
-    if(newAlexH.length>0&&!tradeOffer&&Math.random()<0.12){
+    // Trade offer (12% chance) — Alex prefers to trade away low-value cards, only if alive
+    if(newAlexH.length>0&&!tradeOffer&&ng.alex.hp>0&&Math.random()<0.12){
       const lowValueCards=["energy","spy","perebor"];
       const preferredOffer=newAlexH.findIndex(t=>lowValueCards.includes(t));
       const oi=preferredOffer>=0?preferredOffer:rnd(newAlexH.length);
