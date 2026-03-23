@@ -61,12 +61,5 @@ export default defineConfig({
   plugins: [react(), avatarManifestPlugin()],
   server: {
     port: 3000,
-    proxy: {
-      "/anthropic": {
-        target: "https://api.anthropic.com",
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/anthropic/, ""),
-      },
-    },
   },
 });

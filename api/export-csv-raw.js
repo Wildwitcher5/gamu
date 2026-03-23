@@ -101,7 +101,7 @@ export default async function handler(req, res) {
 
     const bom = '\uFEFF';
     const csvRows = [
-      RAW_FIELDS.map(h => `"${h}"`).join(','),
+      RAW_FIELDS.join(','),
       ...allData.map(row => RAW_FIELDS.map(h => esc(row[h])).join(',')),
     ];
 

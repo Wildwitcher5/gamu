@@ -896,6 +896,7 @@ export default function App(){
       setAllyNick(session.ally_nick);
       // Restore persona so chat works after page reload
       const ingroup=session.s1_ingroup??(session.ingroup??"");
+      if(!session.condition||!ingroup) console.warn("restorePersona: missing condition or ingroup",{condition:session.condition,ingroup});
       setAllyPersona(selectPersona(session.condition,ingroup));
     }
     if(session?.e1_nick) setE1Nick(session.e1_nick);
@@ -1003,7 +1004,7 @@ export default function App(){
       });
       const d=await r.json();
       return d.choices?.[0]?.message?.content??fallback;
-    }catch{return fallback;}
+    }catch(err){console.error("deepseekChat error:",err);return fallback;}
   };
 
   const usedOd=played.reduce((s,p)=>s+CARDS[p.card.type].od,0)
