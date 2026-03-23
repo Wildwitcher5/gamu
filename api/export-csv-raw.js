@@ -81,6 +81,7 @@ function esc(val) {
 
 export default async function handler(req, res) {
   if (req.query.secret !== process.env.ADMIN_SECRET) {
+    console.warn('export-csv-raw auth failed, ip:', req.headers['x-forwarded-for'] || req.socket?.remoteAddress);
     return res.status(401).json({ error: 'Unauthorized' });
   }
 

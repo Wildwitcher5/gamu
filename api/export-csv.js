@@ -50,12 +50,13 @@ const EXPORT_COLUMNS = [
 ];
 
 function escapeCell(value) {
-  if (value == null) return '""';
+  if (value == null) return '';
   return `"${String(value).replace(/"/g, '""')}"`;
 }
 
 export default async function handler(req, res) {
   if (req.query.secret !== process.env.ADMIN_SECRET) {
+    console.warn('export-csv auth failed, ip:', req.headers['x-forwarded-for'] || req.socket?.remoteAddress);
     return res.status(401).json({ error: 'Unauthorized' });
   }
 

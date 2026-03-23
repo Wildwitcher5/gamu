@@ -2183,7 +2183,7 @@ export default function App(){
         localStorage.setItem("ally_nick", nick);
         /* pick enemy nicks from the same persona pool, excluding ally nick */
         const enemyNickList = persona.NICKNAMES.filter(n => n !== nick);
-        const e1n = enemyNickList[Math.floor(Math.random() * enemyNickList.length)];
+        const e1n = enemyNickList.length > 0 ? enemyNickList[Math.floor(Math.random() * enemyNickList.length)] : "Стражник";
         const e2nPool = enemyNickList.filter(n => n !== e1n);
         const e2n = e2nPool.length > 0 ? e2nPool[Math.floor(Math.random() * e2nPool.length)] : "Лазутчик";
         setE1Nick(e1n);
