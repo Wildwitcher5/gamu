@@ -2,6 +2,8 @@ import { prisma } from '../lib/prisma.js';
 
 // All research-relevant fields in logical order — avatars excluded (base64 images break Excel)
 const RAW_FIELDS = [
+  // Session status (use this to filter: "complete" = both surveys done)
+  "status",
   // Meta
   "session_id", "condition", "s1_ingroup", "ally_nick",
   "ts_s1_start", "ts_s1_end", "ts_game_end", "ts_s2_end",
@@ -39,7 +41,9 @@ const RAW_FIELDS = [
   "s1_repr_in_mean", "s1_repr_out_mean", "s1_repr_diff",
   "s1_threat_in_mean", "s1_threat_out_mean", "s1_threat_diff",
   "s1_polar_index",
-  // S2 raw items
+  // S2 direction / ingroup (same as s1, re-asked for stability check)
+  "s2_direction", "s2_ingroup",
+  // S2 raw items (same scales as S1, no contact/demo/dir screens)
   ...Array.from({length:6}, (_,i) => `s2_traits_out_${i+1}`),
   ...Array.from({length:6}, (_,i) => `s2_traits_in_${i+1}`),
   "s2_affect_out", "s2_affect_in",
@@ -62,7 +66,7 @@ const RAW_FIELDS = [
   // Deltas
   "delta_polar", "delta_traits", "delta_affect", "delta_dist",
   "delta_coop", "delta_repr", "delta_threat",
-  // Game feedback
+  // Game feedback (from post-game survey)
   "game_enjoyment", "game_engagement", "game_frequency", "game_guess",
 ];
 
@@ -83,12 +87,18 @@ export default async function handler(req, res) {
   try {
     const rows = await prisma.response.findMany({
       orderBy: { created_at: 'asc' },
-      select:  { data: true },
+      select:  { data: true, status: true },
     });
 
     if (rows.length === 0) return res.status(200).send('No data');
 
-    const allData = rows.map(r => r.data);
+    // Merge DB-level status into the data object so it appears in the CSV
+    const allData = rows
+      .map(r => r.data ? { ...r.data, status: r.status } : null)
+      .filter(Boolean);
+
+    if (allData.length === 0) return res.status(200).send('No data');
+
     const bom = '\uFEFF';
     const csvRows = [
       RAW_FIELDS.map(h => `"${h}"`).join(','),
