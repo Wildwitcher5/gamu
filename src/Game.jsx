@@ -840,7 +840,7 @@ export default function App(){
   const animQueueRef=useRef([]);
   const animPlayingRef=useRef(false);
   const [animating,setAnimating]=useState(false);
-  const [showSetup,setShowSetup]=useState(()=>!localStorage.getItem("playerSetupDone"));
+  const [showSetup,setShowSetup]=useState(false);
   const [playerName,setPlayerName]=useState(()=>localStorage.getItem("playerName")||"");
   const [playerAvatar,setPlayerAvatar]=useState(()=>localStorage.getItem("player_avatar")||null);
   const [setupName,setSetupName]=useState("");
@@ -1084,7 +1084,7 @@ export default function App(){
       revived:`Партнёр тебя воскресил картой Возрождения! Поблагодари коротко, в своей манере.`,
     };
     const text=await deepseekChat(
-      persona.getSystemPrompt(nick,ctx,chat),
+      persona.getSystemPrompt(nick),
       hints[eventType]??"Скажи что-нибудь уместное по ситуации в бою — очень коротко.",
       fallback,
       chat.slice(-4)
@@ -1104,7 +1104,7 @@ export default function App(){
       enemies:["e1","e2"].filter(k=>gs[k].hp>0).map(k=>`${en(k)} ${gs[k].hp}HP`).join(", ")||"повержены",
       hand:alexHand.map(type=>({name:CARDS[type]?.n??type,cost:CARDS[type]?.od??1,desc:CARDS[type]?.d??""})),
     };
-    const sys=allyPersona?.getSystemPrompt(allyNick,ctx,chat)??`Ты игрок ${allyNick} в карточной игре.`;
+    const sys=allyPersona?.getSystemPrompt(allyNick)??`Ты игрок ${allyNick} в карточной игре.`;
     const prompt=canJoin
       ?`Партнёр предлагает совместный удар по ${en(t)} (${gs[t].hp}HP). У тебя есть карта совместного удара. Скажи кратко что готов — 1 фраза.`
       :`Партнёр предлагает совместный удар по ${en(t)} (${gs[t].hp}HP). У тебя нет карты совместного удара. Скажи кратко что не можешь — 1 фраза.`;
@@ -1414,7 +1414,7 @@ export default function App(){
         if(!allyPersona)return;
         const ctx={allyHp:g.alex.hp,youHp:g.you.hp,enemies:aliveAfter.map(k=>`${en(k)} ${g[k].hp}HP`).join(", ")};
         const hint=`У тебя есть карта Совместного удара. Предложи партнёру ударить вместе по ${en(weakestE)} (${g[weakestE].hp} здоровья). Коротко, в своей манере.`;
-        const msg=await deepseekChat(allyPersona.getSystemPrompt(allyNick,ctx,chat),hint,"слушай, давай совм. удар по нему?",chat.slice(-2));
+        const msg=await deepseekChat(allyPersona.getSystemPrompt(allyNick),hint,"слушай, давай совм. удар по нему?",chat.slice(-2));
         addChat("alex",msg);
       },1200);
     }}
@@ -1475,7 +1475,7 @@ export default function App(){
       :actionType==="heal"?"Лечишь союзника. 1 короткая реплика."
       :"Щитуешься. 1 короткая реплика.";
     const message=persona
-      ?await deepseekChat(persona.getSystemPrompt(nick,ctx,chat),actionHint,fallbacks[actionType],chat.slice(-2))
+      ?await deepseekChat(persona.getSystemPrompt(nick),actionHint,fallbacks[actionType],chat.slice(-2))
       :fallbacks[actionType];
     return{message,actions:[{type:actionType,target:actionTarget}]};
   };
@@ -1494,7 +1494,7 @@ export default function App(){
         desc:CARDS[type]?.d??"",
       })),
     };
-    const sys=allyPersona.getSystemPrompt(allyNick,ctx,chat);
+    const sys=allyPersona.getSystemPrompt(allyNick);
     return deepseekChat(sys,msg,allyPersona.FALLBACKS.trade_declined??"Понял.",chat.slice(-4));
   };
   const sendChat=async()=>{
@@ -2167,8 +2167,8 @@ export default function App(){
       {showMatchmaking&&<MatchmakingScreen onReady={()=>setShowMatchmaking(false)}/>}
       {showTutorial&&!showSetup&&!showSurvey1&&!showCondBrief&&!showMatchmaking&&<Tutorial allyNick={allyNick} e1Nick={e1Nick} e2Nick={e2Nick} onEnd={()=>setShowTutorial(false)}/>}
 
-      {/* Pre-game survey — shown after setup, before game */}
-      {showSurvey1&&!showSetup&&<Survey type="pre" onComplete={data=>{
+      {/* Pre-game survey — shown first, before setup screen */}
+      {showSurvey1&&<Survey type="pre" onComplete={data=>{
         setSurvey1Data(data);
         setShowSurvey1(false);
         const cond = assignCondition();
@@ -2190,15 +2190,15 @@ export default function App(){
         setE2Nick(e2n);
         localStorage.setItem("e1_nick", e1n);
         localStorage.setItem("e2_nick", e2n);
-        /* stamp condition + avatars + nicks into the session record */
+        /* stamp condition + avatars + nicks into the session record (nick_self/avatar_self added after setup) */
         const session = getCurrentSession();
         if(session){
-          const updated = {...session, condition:cond, avatar_self:playerAvatar,
-            nick_self:playerName, ally_nick:nick, e1_nick:e1n, e2_nick:e2n, ...avatars};
+          const updated = {...session, condition:cond, ally_nick:nick, e1_nick:e1n, e2_nick:e2n, ...avatars};
           saveCurrentSession(updated);
           upsertResponse(updated);
         }
-        setShowCondBrief(true);
+        /* show setup screen (nickname + avatar) before revealing partner info */
+        setShowSetup(true);
       }}/>}
 
       {/* Post-game survey — shown after game ends, above game-over screen */}
@@ -2250,10 +2250,19 @@ export default function App(){
             <button disabled={!setupName.trim()}
               onClick={()=>{
                 const name=setupName.trim();
+                const avatar=setupAvatarImg||null;
                 localStorage.setItem("playerSetupDone","true");
                 localStorage.setItem("playerName",name);
-                if(setupAvatarImg) localStorage.setItem("player_avatar",setupAvatarImg);
-                setPlayerName(name);setPlayerAvatar(setupAvatarImg||null);setShowSetup(false);
+                if(avatar) localStorage.setItem("player_avatar",avatar);
+                setPlayerName(name);setPlayerAvatar(avatar);setShowSetup(false);
+                /* stamp nick_self + avatar_self now that setup is complete */
+                const session=getCurrentSession();
+                if(session){
+                  const updated={...session,nick_self:name,avatar_self:avatar};
+                  saveCurrentSession(updated);
+                  upsertResponse(updated);
+                }
+                setShowCondBrief(true);
               }}
               style={{background:setupName.trim()
                 ?"linear-gradient(135deg,#7a4008,#c87820)":"rgba(255,255,255,0.06)",

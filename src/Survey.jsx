@@ -26,26 +26,12 @@ const SCALE_COOP = [
   "Скорее\nготов(а)",
   "Полностью\nготов(а)",
 ];
-const SCALE_REPR = [
-  "Совершенно\nнедопустимо",
-  "Скорее\nнедопустимо",
-  "Не\nуверен(а)",
-  "Скорее\nдопустимо",
-  "Совершенно\nдопустимо",
-];
 const SCALE_THREAT = [
   "Почти или\nсовсем нет",
   "Немного",
   "Умеренно",
   "Значительно",
   "Очень\nсильно",
-];
-const SCALE_NET = [
-  "Никто или\nпочти никто",
-  "Меньше\nполовины",
-  "Около\nполовины",
-  "Больше\nполовины",
-  "Все или\nпочти все",
 ];
 const SCALE_GAME_ENJOY = [
   "Очень не\nпонравилась",
@@ -110,20 +96,15 @@ const CSV_HEADERS = [
   "s1_affect_out","s1_affect_in",
   ...Array.from({length:4},(_,i)=>`s1_dist_out_${i+1}`),
   ...Array.from({length:4},(_,i)=>`s1_dist_in_${i+1}`),
-  ...Array.from({length:4},(_,i)=>`s1_coop_out_${i+1}`),
-  ...Array.from({length:4},(_,i)=>`s1_coop_in_${i+1}`),
-  ...Array.from({length:5},(_,i)=>`s1_repr_out_${i+1}`),
-  ...Array.from({length:5},(_,i)=>`s1_repr_in_${i+1}`),
+  ...Array.from({length:3},(_,i)=>`s1_coop_out_${i+1}`),
+  ...Array.from({length:3},(_,i)=>`s1_coop_in_${i+1}`),
   ...Array.from({length:4},(_,i)=>`s1_threat_out_${i+1}`),
   ...Array.from({length:4},(_,i)=>`s1_threat_in_${i+1}`),
-  ...Array.from({length:4},(_,i)=>`s1_contact_out_${i+1}`),
-  ...Array.from({length:4},(_,i)=>`s1_contact_in_${i+1}`),
   // S1 indices
   "s1_traits_in_mean","s1_traits_out_mean","s1_traits_diff",
   "s1_affect_diff",
   "s1_dist_in_mean","s1_dist_out_mean","s1_dist_diff",
   "s1_coop_in_mean","s1_coop_out_mean","s1_coop_diff",
-  "s1_repr_in_mean","s1_repr_out_mean","s1_repr_diff",
   "s1_threat_in_mean","s1_threat_out_mean","s1_threat_diff",
   "s1_polar_index",
   // S2 raw
@@ -133,10 +114,8 @@ const CSV_HEADERS = [
   "s2_affect_out","s2_affect_in",
   ...Array.from({length:4},(_,i)=>`s2_dist_out_${i+1}`),
   ...Array.from({length:4},(_,i)=>`s2_dist_in_${i+1}`),
-  ...Array.from({length:4},(_,i)=>`s2_coop_out_${i+1}`),
-  ...Array.from({length:4},(_,i)=>`s2_coop_in_${i+1}`),
-  ...Array.from({length:5},(_,i)=>`s2_repr_out_${i+1}`),
-  ...Array.from({length:5},(_,i)=>`s2_repr_in_${i+1}`),
+  ...Array.from({length:3},(_,i)=>`s2_coop_out_${i+1}`),
+  ...Array.from({length:3},(_,i)=>`s2_coop_in_${i+1}`),
   ...Array.from({length:4},(_,i)=>`s2_threat_out_${i+1}`),
   ...Array.from({length:4},(_,i)=>`s2_threat_in_${i+1}`),
   // S2 indices
@@ -144,11 +123,10 @@ const CSV_HEADERS = [
   "s2_affect_diff",
   "s2_dist_in_mean","s2_dist_out_mean","s2_dist_diff",
   "s2_coop_in_mean","s2_coop_out_mean","s2_coop_diff",
-  "s2_repr_in_mean","s2_repr_out_mean","s2_repr_diff",
   "s2_threat_in_mean","s2_threat_out_mean","s2_threat_diff",
   "s2_polar_index",
   // Deltas
-  "delta_polar","delta_traits","delta_affect","delta_dist","delta_coop","delta_repr","delta_threat",
+  "delta_polar","delta_traits","delta_affect","delta_dist","delta_coop","delta_threat",
   // Game
   "game_enjoyment","game_engagement","game_frequency","game_guess",
 ];
@@ -189,7 +167,7 @@ function avg(arr) {
 
 function computeIndices(pfx, traitsOut, traitsIn, affectOut, affectIn,
                                 distOut, distIn, coopOut, coopIn,
-                                reprOut,  reprIn,  threatOut, threatIn) {
+                                threatOut, threatIn) {
   const trOutM   = r3(avg(traitsOut));
   const trInM    = r3(avg(traitsIn));
   const trDiff   = r3(trInM - trOutM);
@@ -204,16 +182,12 @@ function computeIndices(pfx, traitsOut, traitsIn, affectOut, affectIn,
   const coopInM  = r3(avg(coopIn));
   const coopDiff = r3(coopInM - coopOutM);
 
-  const reprOutM = r3(avg(reprOut));   // reversed: out − in
-  const reprInM  = r3(avg(reprIn));
-  const reprDiff = r3(reprOutM - reprInM);
-
   const thrOutM  = r3(avg(threatOut)); // reversed: out − in
   const thrInM   = r3(avg(threatIn));
   const thrDiff  = r3(thrOutM - thrInM);
 
   /* polar_index = mean of normalised diffs; threat excluded (it's a mediator) */
-  const polarIdx = r3((trDiff/6 + affDiff/6 + distDiff/4 + coopDiff/4 + reprDiff/4) / 5);
+  const polarIdx = r3((trDiff/6 + affDiff/6 + distDiff/4 + coopDiff/4) / 4);
 
   return {
     [`${pfx}_traits_in_mean`]:  trInM,
@@ -226,9 +200,6 @@ function computeIndices(pfx, traitsOut, traitsIn, affectOut, affectIn,
     [`${pfx}_coop_in_mean`]:    coopInM,
     [`${pfx}_coop_out_mean`]:   coopOutM,
     [`${pfx}_coop_diff`]:       coopDiff,
-    [`${pfx}_repr_in_mean`]:    reprInM,
-    [`${pfx}_repr_out_mean`]:   reprOutM,
-    [`${pfx}_repr_diff`]:       reprDiff,
     [`${pfx}_threat_in_mean`]:  thrInM,
     [`${pfx}_threat_out_mean`]: thrOutM,
     [`${pfx}_threat_diff`]:     thrDiff,
@@ -547,11 +518,11 @@ export function ExportScreen({ onClose }) {
 */
 export default function Survey({ type, onComplete }) {
   const isPre = type === "pre";
-  const TOTAL = isPre ? 19 : 16;
+  const TOTAL = isPre ? 15 : 14;
 
   const IDX = isPre
-    ? { welcome:0, demo:1, dir:2, ingId:3, traitsOut:4, traitsIn:5, affectOut:6, affectIn:7, distOut:8, distIn:9, coopOut:10, coopIn:11, reprOut:12, reprIn:13, threatOut:14, threatIn:15, contactOut:16, contactIn:17, final:18 }
-    : { welcome:0,          ingId:1, traitsOut:2, traitsIn:3, affectOut:4, affectIn:5, distOut:6,  distIn:7,  coopOut:8,  coopIn:9,  reprOut:10, reprIn:11, threatOut:12, threatIn:13, gameQ:14, final:15 };
+    ? { welcome:0, demo:1, dir:2, ingId:3, traitsOut:4, traitsIn:5, affectOut:6, affectIn:7, distOut:8, distIn:9, coopOut:10, coopIn:11, threatOut:12, threatIn:13, final:14 }
+    : { welcome:0,          ingId:1, traitsOut:2, traitsIn:3, affectOut:4, affectIn:5, distOut:6,  distIn:7,  coopOut:8,  coopIn:9,  threatOut:10, threatIn:11, gameQ:12, final:13 };
 
   /* Cookie check — pre only */
   const [cookieScreen, setCookieScreen] = useState(() => isPre && getCookie("pol_study_done") ? "check" : null);
@@ -574,14 +545,10 @@ export default function Survey({ type, onComplete }) {
     affectIn:   null,
     distOut:    [null, null, null, null],
     distIn:     [null, null, null, null],
-    coopOut:    [null, null, null, null],
-    coopIn:     [null, null, null, null],
-    reprOut:    [null, null, null, null, null],
-    reprIn:     [null, null, null, null, null],
+    coopOut:    [null, null, null],
+    coopIn:     [null, null, null],
     threatOut:  [null, null, null, null],
     threatIn:   [null, null, null, null],
-    contactOut: [null, null, null, null],
-    contactIn:  [null, null, null, null],
     gameEnjoyment:  null,
     gameEngagement: null,
     gameFrequency:  null,
@@ -621,8 +588,6 @@ export default function Survey({ type, onComplete }) {
       case IDX.distIn:    return ans.distIn.every(v => v !== null);
       case IDX.coopOut:   return ans.coopOut.every(v => v !== null);
       case IDX.coopIn:    return ans.coopIn.every(v => v !== null);
-      case IDX.reprOut:   return ans.reprOut.every(v => v !== null);
-      case IDX.reprIn:    return ans.reprIn.every(v => v !== null);
       case IDX.threatOut: return ans.threatOut.every(v => v !== null);
       case IDX.threatIn:  return ans.threatIn.every(v => v !== null);
       case IDX.final:     return true;
@@ -631,8 +596,6 @@ export default function Survey({ type, onComplete }) {
           const n = parseInt(ans.age, 10);
           return ans.gender !== null && !isNaN(n) && n >= 18 && n <= 99 && ans.education !== null && ans.income !== null;
         }
-        if (isPre && screen === IDX.contactOut) return ans.contactOut.every(v => v !== null);
-        if (isPre && screen === IDX.contactIn)  return ans.contactIn.every(v => v !== null);
         if (!isPre && screen === IDX.gameQ)     return ans.gameEnjoyment !== null && ans.gameEngagement !== null && ans.gameFrequency !== null;
         return true;
     }
@@ -660,16 +623,12 @@ export default function Survey({ type, onComplete }) {
       ...Object.fromEntries(ans.distIn.map(   (v,i) => [`s1_dist_in_${i+1}`,    v])),
       ...Object.fromEntries(ans.coopOut.map(  (v,i) => [`s1_coop_out_${i+1}`,   v])),
       ...Object.fromEntries(ans.coopIn.map(   (v,i) => [`s1_coop_in_${i+1}`,    v])),
-      ...Object.fromEntries(ans.reprOut.map(  (v,i) => [`s1_repr_out_${i+1}`,   v])),
-      ...Object.fromEntries(ans.reprIn.map(   (v,i) => [`s1_repr_in_${i+1}`,    v])),
       ...Object.fromEntries(ans.threatOut.map((v,i) => [`s1_threat_out_${i+1}`, v])),
       ...Object.fromEntries(ans.threatIn.map( (v,i) => [`s1_threat_in_${i+1}`,  v])),
-      ...Object.fromEntries(ans.contactOut.map((v,i) => [`s1_contact_out_${i+1}`, v])),
-      ...Object.fromEntries(ans.contactIn.map( (v,i) => [`s1_contact_in_${i+1}`,  v])),
       ...computeIndices("s1",
           ans.traitsOut, ans.traitsIn, ans.affectOut, ans.affectIn,
           ans.distOut,   ans.distIn,   ans.coopOut,   ans.coopIn,
-          ans.reprOut,   ans.reprIn,   ans.threatOut,  ans.threatIn),
+          ans.threatOut,  ans.threatIn),
     };
     saveCurrentSession(updated);
     return updated;
@@ -680,7 +639,7 @@ export default function Survey({ type, onComplete }) {
     const s2idx = computeIndices("s2",
       ans.traitsOut, ans.traitsIn, ans.affectOut, ans.affectIn,
       ans.distOut,   ans.distIn,   ans.coopOut,   ans.coopIn,
-      ans.reprOut,   ans.reprIn,   ans.threatOut,  ans.threatIn);
+      ans.threatOut,  ans.threatIn);
     const updated = {
       ...current,
       status: "complete",
@@ -695,8 +654,6 @@ export default function Survey({ type, onComplete }) {
       ...Object.fromEntries(ans.distIn.map(   (v,i) => [`s2_dist_in_${i+1}`,    v])),
       ...Object.fromEntries(ans.coopOut.map(  (v,i) => [`s2_coop_out_${i+1}`,   v])),
       ...Object.fromEntries(ans.coopIn.map(   (v,i) => [`s2_coop_in_${i+1}`,    v])),
-      ...Object.fromEntries(ans.reprOut.map(  (v,i) => [`s2_repr_out_${i+1}`,   v])),
-      ...Object.fromEntries(ans.reprIn.map(   (v,i) => [`s2_repr_in_${i+1}`,    v])),
       ...Object.fromEntries(ans.threatOut.map((v,i) => [`s2_threat_out_${i+1}`, v])),
       ...Object.fromEntries(ans.threatIn.map( (v,i) => [`s2_threat_in_${i+1}`,  v])),
       ...s2idx,
@@ -705,7 +662,6 @@ export default function Survey({ type, onComplete }) {
       delta_affect: r3((s2idx.s2_affect_diff || 0) - (current.s1_affect_diff  || 0)),
       delta_dist:   r3((s2idx.s2_dist_diff   || 0) - (current.s1_dist_diff    || 0)),
       delta_coop:   r3((s2idx.s2_coop_diff   || 0) - (current.s1_coop_diff    || 0)),
-      delta_repr:   r3((s2idx.s2_repr_diff   || 0) - (current.s1_repr_diff    || 0)),
       delta_threat: r3((s2idx.s2_threat_diff || 0) - (current.s1_threat_diff  || 0)),
       game_enjoyment:  ans.gameEnjoyment,
       game_engagement: ans.gameEngagement,
@@ -808,32 +764,6 @@ export default function Survey({ type, onComplete }) {
   const isFinal   = screen === IDX.final;
   const btnLabel  = submitting ? "⏳ Сохраняем…" : isFinal ? (isPre ? "Начать игру →" : "Завершить →") : "Далее →";
 
-  /* ── Screen titles ───────────────────────────────────────────── */
-  const TITLES = {
-    [IDX.welcome]:   isPre ? "Добро пожаловать" : "Послеигровой опрос",
-    [IDX.dir]:       "Ваша позиция",
-    [IDX.ingId]:     "Отношение к группе",
-    [IDX.traitsOut]: "Атрибуция черт",
-    [IDX.traitsIn]:  "Атрибуция черт",
-    [IDX.affectOut]: "Аффективный термометр",
-    [IDX.affectIn]:  "Аффективный термометр",
-    [IDX.distOut]:   "Социальная дистанция",
-    [IDX.distIn]:    "Социальная дистанция",
-    [IDX.coopOut]:   "Готовность к кооперации",
-    [IDX.coopIn]:    "Готовность к кооперации",
-    [IDX.reprOut]:   "Отношение к мерам",
-    [IDX.reprIn]:    "Отношение к мерам",
-    [IDX.threatOut]: "Воспринимаемая угроза",
-    [IDX.threatIn]:  "Воспринимаемая угроза",
-    [IDX.final]:     "",
-  };
-  if (isPre) {
-    TITLES[IDX.demo]       = "О вас";
-    TITLES[IDX.contactOut] = "Ваше окружение";
-    TITLES[IDX.contactIn]  = "Ваше окружение";
-  } else {
-    TITLES[IDX.gameQ] = "Несколько вопросов об игре";
-  }
 
   /* ── Screen content ──────────────────────────────────────────── */
   function renderScreen() {
@@ -844,26 +774,23 @@ export default function Survey({ type, onComplete }) {
         return (
           <>
             <BodyText>
-              Спасибо, что заинтересовались нашим исследованием. Мы, группа
-              исследователей из Высшей школы экономики, изучаем представления
-              людей о себе и о мире, в котором они живут. Если вы живёте в
-              России, мы просим вас ответить на несколько вопросов. Это займёт
-              около 20 минут.
+              Это исследование посвящено тому, как люди с разными взглядами на
+              жизнь в стране общаются и взаимодействуют друг с другом в онлайн-игре.
+              Нас интересует, что влияет на готовность людей к совместным делам
+              и обсуждению общих проблем.
             </BodyText>
             <BodyText>
-              Ответы на вопросы не подразделяются на «правильные» и
-              «неправильные». Будьте уверены: какой бы ответ вы не выбрали,
-              найдутся люди, которые ответят по-другому. Поэтому лучший
-              ответ — это ваше личное мнение.
+              Мы — группа исследователей из Высшей школы экономики. Если вы
+              живёте в России, просим вас ответить на несколько вопросов перед
+              началом игры. Это займёт около 10 минут.
             </BodyText>
             <BodyText>
-              Исследование полностью анонимно: вам не понадобится указывать
-              своё имя, место жительства и другие персональные данные. Кроме
-              того, в любой момент вы можете отказаться от участия. Ваши ответы
-              будут использоваться только в обобщённом виде и только в научных
-              целях.
+              Правильных и неправильных ответов здесь нет — нас интересует
+              именно ваше личное мнение. Пожалуйста, отвечайте честно и не
+              торопитесь. Исследование полностью анонимно: имя и личные данные
+              указывать не нужно. Ваши ответы используются только в обобщённом
+              виде и только в научных целях.
             </BodyText>
-            <BodyText style={{ fontWeight: 600 }}>Благодарим вас за участие!</BodyText>
           </>
         );
       }
@@ -1070,10 +997,9 @@ export default function Survey({ type, onComplete }) {
           </BodyText>
           <SurveyMatrix
             items={[
-              "Обсуждать общественные проблемы",
-              "Искать решения общественных проблем",
-              "Участвовать в гражданских инициативах",
-              "Делить общие ресурсы",
+              "Обсуждать общественно значимые проблемы",
+              "Искать совместные решения общественных проблем",
+              "Участвовать в гражданских инициативах районного или городского уровня (например, благоустройство, петиции, общественные слушания)",
             ]}
             scale={SCALE_COOP}
             values={ans.coopOut}
@@ -1093,63 +1019,14 @@ export default function Survey({ type, onComplete }) {
           </BodyText>
           <SurveyMatrix
             items={[
-              "Обсуждать общественные проблемы",
-              "Искать решения общественных проблем",
-              "Участвовать в гражданских инициативах",
-              "Делить общие ресурсы",
+              "Обсуждать общественно значимые проблемы",
+              "Искать совместные решения общественных проблем",
+              "Участвовать в гражданских инициативах районного или городского уровня (например, благоустройство, петиции, общественные слушания)",
             ]}
             scale={SCALE_COOP}
             values={ans.coopIn}
             onChange={(ri, v) => setArr("coopIn", ri, v)}
             uid={`${type}_coopin`}
-          />
-        </>
-      );
-    }
-
-    /* Block E: Repression — outgroup */
-    if (screen === IDX.reprOut) {
-      return (
-        <>
-          <BodyText style={{ marginBottom: 16 }}>
-            Насколько допустимыми вам кажутся следующие меры в отношении {gt.outTxt}?
-          </BodyText>
-          <SurveyMatrix
-            items={[
-              "Запрет баллотироваться на выборные должности",
-              "Запрет преподавать в учебных заведениях",
-              "Запрет работать в государственных органах",
-              "Денежный штраф за публичное выражение своих взглядов",
-              "Лишение свободы за публичное выражение своих взглядов",
-            ]}
-            scale={SCALE_REPR}
-            values={ans.reprOut}
-            onChange={(ri, v) => setArr("reprOut", ri, v)}
-            uid={`${type}_rout`}
-          />
-        </>
-      );
-    }
-
-    /* Block E: Repression — ingroup */
-    if (screen === IDX.reprIn) {
-      return (
-        <>
-          <BodyText style={{ marginBottom: 16 }}>
-            Насколько допустимыми вам кажутся следующие меры в отношении {gt.inTxt}?
-          </BodyText>
-          <SurveyMatrix
-            items={[
-              "Запрет баллотироваться на выборные должности",
-              "Запрет преподавать в учебных заведениях",
-              "Запрет работать в государственных органах",
-              "Денежный штраф за публичное выражение своих взглядов",
-              "Лишение свободы за публичное выражение своих взглядов",
-            ]}
-            scale={SCALE_REPR}
-            values={ans.reprIn}
-            onChange={(ri, v) => setArr("reprIn", ri, v)}
-            uid={`${type}_rin`}
           />
         </>
       );
@@ -1201,54 +1078,6 @@ export default function Survey({ type, onComplete }) {
       );
     }
 
-    /* Contact — outgroup (pre only) */
-    if (isPre && screen === IDX.contactOut) {
-      return (
-        <>
-          <BodyText style={{ marginBottom: 16 }}>
-            Ответьте на несколько вопросов о том, как ваше окружение относится
-            к происходящему в стране.
-          </BodyText>
-          <SurveyMatrix
-            items={[
-              `Сколько людей, с которыми вы общаетесь в социальных сетях, считают, что дела в России идут в ${gt.outDir} направлении?`,
-              `Сколько людей, с которыми вы регулярно общаетесь (на работе, в университете, по соседству и т.д.), считают, что дела в России идут в ${gt.outDir} направлении?`,
-              `Сколько ваших родственников (включая родителей, братьев, сестёр, бабушек, дедушек и т.д.) считают, что дела в России идут в ${gt.outDir} направлении?`,
-              `Сколько ваших друзей считают, что дела в России идут в ${gt.outDir} направлении?`,
-            ]}
-            scale={SCALE_NET}
-            values={ans.contactOut}
-            onChange={(ri, v) => setArr("contactOut", ri, v)}
-            uid={`${type}_contout`}
-          />
-        </>
-      );
-    }
-
-    /* Contact — ingroup (pre only) */
-    if (isPre && screen === IDX.contactIn) {
-      return (
-        <>
-          <BodyText style={{ marginBottom: 16 }}>
-            Ответьте на несколько вопросов о том, как ваше окружение относится
-            к происходящему в стране.
-          </BodyText>
-          <SurveyMatrix
-            items={[
-              `Сколько людей, с которыми вы общаетесь в социальных сетях, считают, что дела в России идут в ${gt.inDir} направлении?`,
-              `Сколько людей, с которыми вы регулярно общаетесь (на работе, в университете, по соседству и т.д.), считают, что дела в России идут в ${gt.inDir} направлении?`,
-              `Сколько ваших родственников (включая родителей, братьев, сестёр, бабушек, дедушек и т.д.) считают, что дела в России идут в ${gt.inDir} направлении?`,
-              `Сколько ваших друзей считают, что дела в России идут в ${gt.inDir} направлении?`,
-            ]}
-            scale={SCALE_NET}
-            values={ans.contactIn}
-            onChange={(ri, v) => setArr("contactIn", ri, v)}
-            uid={`${type}_contin`}
-          />
-        </>
-      );
-    }
-
     /* Game questions (post only) */
     if (!isPre && screen === IDX.gameQ) {
       return (
@@ -1295,8 +1124,6 @@ export default function Survey({ type, onComplete }) {
     return null;
   }
 
-  const title = TITLES[screen];
-
   /* ── Render ─────────────────────────────────────────────────── */
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(6,4,2,0.97)", display: "flex", alignItems: "flex-start", justifyContent: "center", zIndex: 1500, backdropFilter: "blur(8px)", overflowY: "auto", padding: "32px 16px 48px" }}>
@@ -1309,13 +1136,6 @@ export default function Survey({ type, onComplete }) {
         <div style={{ fontSize: 11, color: "#b0a898", marginBottom: 28, fontFamily: "Georgia, serif", letterSpacing: 0.3 }}>
           Шаг {screen + 1} из {TOTAL}
         </div>
-
-        {/* Screen title */}
-        {title && (
-          <div style={{ fontSize: 18, fontWeight: 700, color: "#1a1410", marginBottom: 22, letterSpacing: 0.3, fontFamily: "Georgia, serif", borderBottom: "2px solid #e8e4de", paddingBottom: 14 }}>
-            {title}
-          </div>
-        )}
 
         {/* Content */}
         {renderScreen()}
