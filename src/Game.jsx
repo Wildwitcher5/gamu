@@ -57,6 +57,7 @@ const ART = {
 };
 
 /* ── Constants ──────────────────────────────────────────────────────────── */
+const SKIP = "[SKIP]";
 const MHP = { you:100, alex:100, e1:100, e2:100 };
 
 const CARDS = {
@@ -843,9 +844,17 @@ export default function App(){
   const [showSurvey2,setShowSurvey2]=useState(false);
   const [survey1Data,setSurvey1Data]=useState(null);
   const [survey2Data,setSurvey2Data]=useState(null);
-  const [blockOrder]=useState(()=>Math.random()<0.5?"out_first":"in_first");
+  const [blockOrder]=useState(()=>{
+    const saved=localStorage.getItem("block_order");
+    if(saved)return saved;
+    const order=Math.random()<0.5?"out_first":"in_first";
+    localStorage.setItem("block_order",order);
+    return order;
+  });
   const [isMobile,setIsMobile]=useState(()=>window.innerWidth<=767);
   const [activeTab,setActiveTab]=useState("battle");
+  const activeTabRef=useRef("battle");
+  const [unreadChat,setUnreadChat]=useState(0);
   useEffect(()=>{
     const onResize=()=>setIsMobile(window.innerWidth<=767);
     window.addEventListener("resize",onResize);
@@ -928,7 +937,10 @@ export default function App(){
   },[phase,gs.you.hp,loading]);
 
   const addLog=t=>setLog(l=>[...l,t]);
-  const addChat=(from,text)=>setChat(c=>[...c,{from,text}]);
+  const addChat=(from,text)=>{
+    setChat(c=>[...c,{from,text}]);
+    if(from==="alex")setUnreadChat(n=>activeTabRef.current==="chat"?n:n+1);
+  };
   const doFlash=(key,dmg)=>{
     setFlash(f=>({...f,[key]:dmg}));
     if(dmg>=8){setShake(key);setTimeout(()=>setShake(null),420);}
@@ -1501,7 +1513,7 @@ export default function App(){
   const sendChat=async()=>{
     const msg=input.trim();if(!msg||loading)return;
     addChat("you",msg);setInput("");setLoad(true);
-    const r=await alexChatAPI(msg,gs);if(r!=="[SKIP]")addChat("alex",r);setLoad(false);
+    const r=await alexChatAPI(msg,gs);if(r!==SKIP)addChat("alex",r);setLoad(false);
   };
   const restart=()=>{
     const gi=createGameInit();
@@ -1782,7 +1794,7 @@ export default function App(){
               {[["🛡 Прикрой","Прикрой меня!"],["⚔ Бей!",`Бей ${en("e1")}!`],
                 ["💉 Лечи","Исцели меня!"],["💥 Совм.","Совместный удар?"],
                 ["📖 Комбо?","Какие комбо нам доступны?"]].map(([label,msg])=>(
-                <button key={label} onClick={()=>{if(!loading){addChat("you",msg);setInput("");setLoad(true);alexChatAPI(msg,gs).then(r=>{if(r!=="[SKIP]")addChat("alex",r);setLoad(false);});}}}
+                <button key={label} onClick={()=>{if(!loading){addChat("you",msg);setInput("");setLoad(true);alexChatAPI(msg,gs).then(r=>{if(r!==SKIP)addChat("alex",r);setLoad(false);});}}}
                   disabled={loading} style={{background:"rgba(200,160,80,0.06)",border:"1px solid rgba(200,160,80,0.2)",
                   borderRadius:6,padding:"5px 9px",color:loading?"#2a1808":"#8a7050",fontSize:10,
                   cursor:loading?"default":"pointer",fontFamily:"Georgia,serif"}}>{label}</button>
@@ -1959,7 +1971,7 @@ export default function App(){
             {tab:"cards", label:"🎴 Карты"},
             {tab:"chat",  label:"💬 Чат"},
           ].map(({tab,label})=>(
-            <button key={tab} onClick={()=>setActiveTab(tab)} style={{
+            <button key={tab} onClick={()=>{setActiveTab(tab);activeTabRef.current=tab;if(tab==="chat")setUnreadChat(0);}} style={{
               flex:1,border:"none",cursor:"pointer",
               background:activeTab===tab?"rgba(200,160,80,0.15)":"transparent",
               color:activeTab===tab?"#c8b080":"#5a4a30",
@@ -1967,8 +1979,15 @@ export default function App(){
               display:"flex",flexDirection:"column",
               alignItems:"center",justifyContent:"center",gap:3,
               borderTop:activeTab===tab?"2px solid rgba(200,160,80,0.6)":"2px solid transparent",
-              transition:"all 0.15s"}}>
+              transition:"all 0.15s",position:"relative"}}>
               {label}
+              {tab==="chat"&&unreadChat>0&&(
+                <div style={{position:"absolute",top:6,right:"22%",minWidth:16,height:16,borderRadius:8,
+                  background:"#e05252",color:"#fff",fontSize:9,fontWeight:700,
+                  display:"flex",alignItems:"center",justifyContent:"center",padding:"0 3px"}}>
+                  {unreadChat>9?"9+":unreadChat}
+                </div>
+              )}
             </button>
           ))}
         </div>

@@ -467,45 +467,34 @@ export function ExportScreen({ onClose }) {
 /*
   Screen layout:
 
-  PRE (19 screens):
+  PRE (13 screens):
     0  welcome
     1  demo
     2  dir
     3  ingId
-    4  traitsOut   (Block A out)
-    5  traitsIn    (Block A in)
-    6  affectOut   (Block B out)
-    7  affectIn    (Block B in)
-    8  distOut     (Block C out)
-    9  distIn      (Block C in)
-    10 coopOut     (Block D out)
-    11 coopIn      (Block D in)
-    12 reprOut     (Block E out)
-    13 reprIn      (Block E in)
-    14 threatOut   (Block F out)
-    15 threatIn    (Block F in)
-    16 contactOut
-    17 contactIn
-    18 final
+    4  traitsOut   (Block A out) — or 5 if in_first
+    5  traitsIn    (Block A in)  — or 4 if in_first
+    6  affectOut   (Block B out) — or 7 if in_first
+    7  affectIn    (Block B in)  — or 6 if in_first
+    8  distOut     (Block C out) — or 9 if in_first
+    9  distIn      (Block C in)  — or 8 if in_first
+    10 coopOut     (Block D out) — or 11 if in_first
+    11 coopIn      (Block D in)  — or 10 if in_first
+    12 final
 
-  POST (17 screens):
+  POST (12 screens):
     0  welcome
-    1  dir
-    2  ingId
-    3  traitsOut
-    4  traitsIn
-    5  affectOut
-    6  affectIn
-    7  distOut
-    8  distIn
-    9  coopOut
-    10 coopIn
-    11 reprOut
-    12 reprIn
-    13 threatOut
-    14 threatIn
-    15 gameQ
-    16 final
+    1  ingId
+    2  traitsOut   — or 3 if in_first
+    3  traitsIn    — or 2 if in_first
+    4  affectOut   — or 5 if in_first
+    5  affectIn    — or 4 if in_first
+    6  distOut     — or 7 if in_first
+    7  distIn      — or 6 if in_first
+    8  coopOut     — or 9 if in_first
+    9  coopIn      — or 8 if in_first
+    10 gameQ
+    11 final
 */
 export default function Survey({ type, blockOrder = "out_first", onComplete }) {
   const isPre = type === "pre";

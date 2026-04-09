@@ -1,16 +1,13 @@
-import * as neutral from "./neutral.js";
 import * as pro from "./pro.js";
 import * as anti from "./anti.js";
 
 /**
- * Select persona based on experimental condition + participant's ingroup.
- * cond_4             → neutral (partner from neutral folder, politics off)
- * ingroup="approve"  → anti   (partner disapproves of Russia's course)
- * ingroup="disapprove"→ pro   (partner approves of Russia's course)
+ * Select persona based on participant's ingroup.
+ * ingroup="approve"   → anti (partner disapproves of Russia's course)
+ * ingroup="disapprove"→ pro  (partner approves of Russia's course)
  */
-export function selectPersona(condition, ingroup) {
-  if (condition === "cond_4") return neutral;
-  if (ingroup === "approve")  return anti;
+export function selectPersona(_condition, ingroup) {
+  if (ingroup === "approve") return anti;
   return pro;
 }
 
