@@ -273,8 +273,8 @@ function RadioOption({ label, checked, onChange }) {
 /* Matrix: column headers + item rows sharing one scale */
 function SurveyMatrix({ items, scale, values, onChange, uid }) {
   return (
-    <div>
-      <div style={{ display: "flex", gap: 0, paddingLeft: "36%", marginBottom: 2 }}>
+    <div className="survey-matrix">
+      <div className="survey-matrix-header">
         {scale.map((lbl, ci) => (
           <div key={ci} style={{ flex: 1, textAlign: "center", fontSize: 9.5, color: "#999", lineHeight: 1.3, whiteSpace: "pre-line", padding: "0 1px" }}>
             {lbl}
@@ -283,7 +283,7 @@ function SurveyMatrix({ items, scale, values, onChange, uid }) {
       </div>
       {items.map((item, ri) => (
         <div key={ri} style={{ display: "flex", alignItems: "center", borderTop: "1px solid #eeece8", padding: "10px 0" }}>
-          <div style={{ width: "36%", paddingRight: 12, fontSize: 13, color: "#2a2520", lineHeight: 1.55, fontFamily: "Georgia, serif" }}>
+          <div className="survey-matrix-label" style={{ paddingRight: 12, fontSize: 13, color: "#2a2520", lineHeight: 1.55, fontFamily: "Georgia, serif" }}>
             {item}
           </div>
           <div style={{ flex: 1, display: "flex" }}>
@@ -294,7 +294,7 @@ function SurveyMatrix({ items, scale, values, onChange, uid }) {
                   name={`${uid}_r${ri}`}
                   checked={values[ri] === ci + 1}
                   onChange={() => onChange(ri, ci + 1)}
-                  style={{ accentColor: "#2d5a8c", width: 16, height: 16, cursor: "pointer" }}
+                  style={{ accentColor: "#2d5a8c", width: 18, height: 18, cursor: "pointer" }}
                 />
               </label>
             ))}
@@ -359,28 +359,24 @@ function SemanticDiff({ leftLabel, rightLabel, n, value, onChange, name }) {
    Intermediate points (2–6) are not labelled. */
 function BipolarMatrix({ items, values, onChange, uid }) {
   return (
-    <div>
+    <div className="bipolar-matrix">
       {items.map(([leftLabel, rightLabel], ri) => (
-        <div key={ri} style={{ display: "flex", alignItems: "center", borderTop: "1px solid #eeece8", padding: "12px 0", gap: 0 }}>
-          <div style={{ width: "27%", paddingRight: 12, fontSize: 13, color: "#3a3228", lineHeight: 1.45, fontFamily: "Georgia, serif", textAlign: "right", fontStyle: "italic" }}>
-            {leftLabel}
-          </div>
+        <div key={ri} className="bipolar-row">
+          <div className="bipolar-label bipolar-label-left">{leftLabel}</div>
           <div style={{ flex: 1, display: "flex", alignItems: "center" }}>
             {Array.from({ length: 7 }, (_, ci) => (
-              <label key={ci} style={{ flex: 1, display: "flex", justifyContent: "center", cursor: "pointer" }}>
+              <label key={ci} style={{ flex: 1, display: "flex", justifyContent: "center", cursor: "pointer", padding: "4px 0" }}>
                 <input
                   type="radio"
                   name={`${uid}_r${ri}`}
                   checked={values[ri] === ci + 1}
                   onChange={() => onChange(ri, ci + 1)}
-                  style={{ accentColor: "#2d5a8c", width: 17, height: 17, cursor: "pointer" }}
+                  style={{ accentColor: "#2d5a8c", width: 18, height: 18, cursor: "pointer" }}
                 />
               </label>
             ))}
           </div>
-          <div style={{ width: "27%", paddingLeft: 12, fontSize: 13, color: "#3a3228", lineHeight: 1.45, fontFamily: "Georgia, serif", fontStyle: "italic" }}>
-            {rightLabel}
-          </div>
+          <div className="bipolar-label bipolar-label-right">{rightLabel}</div>
         </div>
       ))}
     </div>
@@ -469,30 +465,22 @@ export function ExportScreen({ onClose }) {
 
   PRE (13 screens):
     0  welcome
-    1  demo
-    2  dir
-    3  ingId
-    4  traitsOut   (Block A out) — or 5 if in_first
-    5  traitsIn    (Block A in)  — or 4 if in_first
-    6  affectOut   (Block B out) — or 7 if in_first
-    7  affectIn    (Block B in)  — or 6 if in_first
-    8  distOut     (Block C out) — or 9 if in_first
-    9  distIn      (Block C in)  — or 8 if in_first
-    10 coopOut     (Block D out) — or 11 if in_first
-    11 coopIn      (Block D in)  — or 10 if in_first
+    1  dir
+    2  ingId
+    3/4  traitsOut/traitsIn (swapped by blockOrder)
+    5/6  affectOut/affectIn
+    7/8  distOut/distIn
+    9/10 coopOut/coopIn
+    11 demo  ← demographics moved to end to reduce priming
     12 final
 
   POST (12 screens):
     0  welcome
     1  ingId
-    2  traitsOut   — or 3 if in_first
-    3  traitsIn    — or 2 if in_first
-    4  affectOut   — or 5 if in_first
-    5  affectIn    — or 4 if in_first
-    6  distOut     — or 7 if in_first
-    7  distIn      — or 6 if in_first
-    8  coopOut     — or 9 if in_first
-    9  coopIn      — or 8 if in_first
+    2/3  traitsOut/traitsIn
+    4/5  affectOut/affectIn
+    6/7  distOut/distIn
+    8/9  coopOut/coopIn
     10 gameQ
     11 final
 */
@@ -502,12 +490,12 @@ export default function Survey({ type, blockOrder = "out_first", onComplete }) {
   const outFirst = blockOrder !== "in_first";
 
   const IDX = isPre
-    ? { welcome:0, demo:1, dir:2, ingId:3,
-        traitsOut:outFirst?4:5, traitsIn:outFirst?5:4,
-        affectOut:outFirst?6:7, affectIn:outFirst?7:6,
-        distOut:outFirst?8:9,   distIn:outFirst?9:8,
-        coopOut:outFirst?10:11, coopIn:outFirst?11:10,
-        final:12 }
+    ? { welcome:0, dir:1, ingId:2,
+        traitsOut:outFirst?3:4, traitsIn:outFirst?4:3,
+        affectOut:outFirst?5:6, affectIn:outFirst?6:5,
+        distOut:outFirst?7:8,   distIn:outFirst?8:7,
+        coopOut:outFirst?9:10,  coopIn:outFirst?10:9,
+        demo:11, final:12 }
     : { welcome:0, ingId:1,
         traitsOut:outFirst?2:3, traitsIn:outFirst?3:2,
         affectOut:outFirst?4:5, affectIn:outFirst?5:4,
@@ -643,10 +631,14 @@ export default function Survey({ type, blockOrder = "out_first", onComplete }) {
       delta_affect: r3((s2idx.s2_affect_diff || 0) - (current.s1_affect_diff  || 0)),
       delta_dist:   r3((s2idx.s2_dist_diff   || 0) - (current.s1_dist_diff    || 0)),
       delta_coop:   r3((s2idx.s2_coop_diff   || 0) - (current.s1_coop_diff    || 0)),
-      game_enjoyment:  ans.gameEnjoyment,
-      game_engagement: ans.gameEngagement,
-      game_frequency:  ans.gameFrequency,
-      game_guess:      ans.gameGuess,
+      game_enjoyment:       ans.gameEnjoyment,
+      game_engagement:      ans.gameEngagement,
+      game_frequency:       ans.gameFrequency,
+      game_guess:           ans.gameGuess,
+      game_outcome:         current.game_outcome ?? null,
+      game_turns:           current.game_turns   ?? null,
+      chat_messages_sent:   current.chat_messages_sent ?? null,
+      block_order:          current.block_order  ?? null,
     };
     saveCurrentSession(updated);
     return updated;

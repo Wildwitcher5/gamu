@@ -79,23 +79,27 @@ const CARDS = {
 };
 
 const DECK_TEMPLATE = [
-  "attack","attack","attack","double",
-  "shield","shield","healAlex","revive",
-  "poison","bleed","rage","joint",
-  "spy","energy","trap","counter",
-  "attack","shield","poison","bleed",
-  "attack","attack","double","shield",
-  "healAlex","poison","bleed","rage",
-  "joint","spy","energy","trap",
-  "counter","attack","shield","revive",
-  "poison","bleed","attack","double",
-  "perebor","jcounter",
+  "attack","attack","attack","attack","attack","attack",
+  "double","double","double",
+  "rage","rage",
+  "shield","shield","shield","shield","shield",
+  "counter","counter",
+  "trap","trap",
+  "healAlex","healAlex","healAlex",
+  "revive","revive",
+  "poison","poison","poison",
+  "bleed","bleed","bleed",
+  "spy","spy",
+  "energy","energy","energy",
+  "perebor","perebor",
+  "jcounter","jcounter",
+  "joint","joint",
 ];
 const RESHUFFLE_TEMPLATE = [
-  "attack","attack","shield","poison",
-  "bleed","rage","double","energy",
-  "joint","trap","counter","attack",
-  "perebor","revive",
+  "attack","attack","shield","shield",
+  "poison","bleed","rage","double",
+  "energy","joint","trap","counter",
+  "perebor","revive","jcounter",
 ];
 const fpCycle=c=>c===1?0:c===2?3:c===3?6:10;
 const ALEX_ACTION_MAP={attack:["attack","double","rage","bleed"],shield:["shield","counter","trap"],heal:["healAlex","revive","energy"]};
@@ -855,6 +859,7 @@ export default function App(){
   const [activeTab,setActiveTab]=useState("battle");
   const activeTabRef=useRef("battle");
   const [unreadChat,setUnreadChat]=useState(0);
+  const chatMsgCountRef=useRef(0);
   useEffect(()=>{
     const onResize=()=>setIsMobile(window.innerWidth<=767);
     window.addEventListener("resize",onResize);
@@ -879,16 +884,24 @@ export default function App(){
   useEffect(()=>{logEnd.current?.scrollIntoView({behavior:"smooth"});},[log]);
   // Keep ref to latest skipTurn to avoid stale closure in auto-skip effect
   useEffect(()=>{skipTurnRef.current=skipTurn;});
-  // Save ts_game_end when game ends; survey2 shown via ПРОДОЛЖИТЬ button
+  // Save ts_game_end, outcome, turns, chat count when game ends
   useEffect(()=>{
     if(phase==="over"){
       const session=getCurrentSession();
       if(session){
-        const updated={...session,ts_game_end:new Date().toISOString()};
+        const updated={
+          ...session,
+          ts_game_end:new Date().toISOString(),
+          game_outcome:winner??"unknown",
+          game_turns:turn,
+          chat_messages_sent:chatMsgCountRef.current,
+          block_order:localStorage.getItem("block_order")??"out_first",
+        };
         saveCurrentSession(updated);
         upsertResponse(updated);
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   },[phase]);
 
   // Restore condition + gameAvatars + persona from session on mount
@@ -940,6 +953,7 @@ export default function App(){
   const addChat=(from,text)=>{
     setChat(c=>[...c,{from,text}]);
     if(from==="alex")setUnreadChat(n=>activeTabRef.current==="chat"?n:n+1);
+    if(from==="you")chatMsgCountRef.current+=1;
   };
   const doFlash=(key,dmg)=>{
     setFlash(f=>({...f,[key]:dmg}));
@@ -1102,7 +1116,7 @@ export default function App(){
       fallback,
       chat.slice(-4)
     );
-    addChat("alex",text);
+    addChat("alex",text===SKIP?fallback:text);
   };
 
   /* ── Alex joint ─────────────────────────────────────────────────────── */
@@ -1201,7 +1215,7 @@ export default function App(){
         case"poison":
           if(ng[tgt].poison===0){ng[tgt]={...ng[tgt],poison:3};logs.push(`${name} ☠️→${tgt==="you"?"тебя":"Союзника"}: яд`);}
           else basicAtk(tgt,8);break;
-        case"bleed": ng[tgt]={...ng[tgt],bleed:(ng[tgt].bleed??0)+4};logs.push(`${name} 🩸→${tgt==="you"?"тебя":"Союзника"}: кровотечение`);break;
+        case"bleed": ng[tgt]={...ng[tgt],bleed:Math.min((ng[tgt].bleed??0)+4,8)};logs.push(`${name} 🩸→${tgt==="you"?"тебя":"Союзника"}: кровотечение`);break;
         case"rage":{let d=18;
           if(tgt==="you"&&ng.you.trap){ng.you={...ng.you,trap:false};ng[actor]={...ng[actor],hp:cl(ng[actor].hp-10,0,999)};hit(actor,10);logs.push(`🪤 Ловушка! ${name} −10HP`);d=0;}
           if(tgt==="you"&&ng.you.counter&&d>0){ng.you={...ng.you,counter:false};ng[actor]={...ng[actor],hp:cl(ng[actor].hp-d,0,999)};hit(actor,d);logs.push(`↩️ Контрудар! ${name} −${d}HP`);d=0;}
@@ -1254,7 +1268,7 @@ export default function App(){
     addLog(`Ход ${turn}: Пропуск — +1 ОД в банк`);
     let g={you:{...gs.you},alex:{...gs.alex},e1:{...gs.e1},e2:{...gs.e2}};
     const logs=[];
-    const ar=await alexTurnAPI(g,"",false);if(ar.message&&ar.message.trim())addChat("alex",ar.message);
+    const ar=await alexTurnAPI(g,"",false);if(ar.message&&ar.message.trim()&&ar.message!==SKIP)addChat("alex",ar.message);
     let capDeck=[...sharedDeck];let capCycle=fatigueCycle;
     let newAlexH=[...alexHand];
     for(const a of(ar.actions??[]).slice(0,1)){
@@ -1326,7 +1340,7 @@ export default function App(){
         case"shield":{g.you={...g.you,hp:cl(g.you.hp+10,0,g.you.maxHp)};doEvent("you",10,"💚 Щит → +10 HP",'#60d080',true);logs.push("Ты 🛡️: +10HP");break;}
         case"healAlex":{if(g.alex.hp>0){g.alex={...g.alex,hp:cl(g.alex.hp+12,0,g.alex.maxHp)};doEvent("alex",12,"💚 Исцелить → Союзник +12 HP",'#60d080',true);logs.push("Ты 💉→Союзник: +12HP");}break;}
         case"poison":{if(g[target].hp>0){g[target]={...g[target],poison:3};showBanner(`☠ Яд → ${en(target)}`,'#c060ff');logs.push(`Ты ☠️→${en(target)}: яд`);}break;}
-        case"bleed":{if(g[target].hp>0){g[target]={...g[target],bleed:(g[target].bleed??0)+4};showBanner(`🩸 Кровотечение → ${en(target)}`,'#e04040');logs.push(`Ты 🩸→${en(target)}: кровотечение ×4`);}break;}
+        case"bleed":{if(g[target].hp>0){g[target]={...g[target],bleed:Math.min((g[target].bleed??0)+4,8)};showBanner(`🩸 Кровотечение → ${en(target)}`,'#e04040');logs.push(`Ты 🩸→${en(target)}: кровотечение ×4`);}break;}
         case"rage":{const d=18;if(g[target]?.counter){g[target]={...g[target],counter:false};g.you={...g.you,hp:cl(g.you.hp-d,0,g.you.maxHp)};doEvent("you",d,`↩️ ${en(target)} Контр! −${d} HP тебе`,'#ff9040');logs.push(`↩️ ${en(target)} Контр → ты −${d} (ярость)`);}else{g[target]={...g[target],hp:cl(g[target].hp-d,0,999)};doEvent(target,d,`🔥 Ярость → ${en(target)} −${d} HP`,'#ff6060');logs.push(`Ты 🔥→${en(target)}: −${d} (−4HP себе)`);}g.you={...g.you,hp:cl(g.you.hp-4,0,g.you.maxHp)};doEvent("you",4,"🔥 Отдача −4 HP",'#ff9040');break;}
         case"energy":{nob=2;showBanner("⚡ Энергия → +2 ОД на следующий ход",'#e8d090');logs.push("Ты ⚡: +2ОД на след. ход");break;}
         case"trap":{g.you={...g.you,trap:true};showBanner("🪤 Ловушка установлена",'#e8d090');logs.push("Ты 🪤: Ловушка установлена");break;}
@@ -1372,7 +1386,7 @@ export default function App(){
     const allyLow=g.alex.hp<MHP.alex*0.35||g.you.hp<MHP.you*0.35;
     if(Math.random()<0.25){setThinking(t=>({...t,alex:true}));await dly(1500+rnd(1500));setThinking(t=>({...t,alex:false}));}
     const ar=await alexTurnAPI(g,"",allyLow);
-    if(ar.message&&ar.message.trim())addChat("alex",ar.message);
+    if(ar.message&&ar.message.trim()&&ar.message!==SKIP)addChat("alex",ar.message);
     let newAlexH=[...alexHand];
     const alexActionType=ar.actions?.[0]?.type??"";
     for(const a of(ar.actions??[]).slice(0,1)){
@@ -1494,20 +1508,22 @@ export default function App(){
   };
   const alexChatAPI=async(msg,g)=>{
     if(!allyPersona)return"Понял.";
-    const aliveEnemies=["e1","e2"].filter(k=>g?.[k]?.hp>0).map(k=>`${en(k)} ${g[k].hp}/100`);
+    const aliveEnemies=["e1","e2"].filter(k=>g?.[k]?.hp>0).map(k=>`${en(k)} ${g[k].hp}/100HP`);
     const deadEnemies=["e1","e2"].filter(k=>g?.[k]?.hp<=0).map(k=>en(k));
-    const ctx={
-      allyHp:g?.alex?.hp??"?",
-      youHp:g?.you?.hp??"?",
-      enemies:aliveEnemies.join(", ")||"все повержены",
-      dead:deadEnemies.length?deadEnemies.join(", "):"никто",
-      hand:alexHand.map(type=>({
-        name:CARDS[type]?.n??type,
-        cost:CARDS[type]?.od??1,
-        desc:CARDS[type]?.d??"",
-      })),
-    };
-    const sys=allyPersona.getSystemPrompt(allyNick);
+    const allyHp=g?.alex?.hp??"?";
+    const youHp=g?.you?.hp??"?";
+    const handDesc=alexHand.length
+      ?alexHand.map(t=>`«${CARDS[t]?.n??t}»(${CARDS[t]?.od??1}ОД)`).join(", ")
+      :"карт нет";
+    const statusLines=[
+      `Идёт бой «Дружина» — 2 против 2. Ход ${turn}.`,
+      `Твоё здоровье: ${allyHp}/100. Партнёр (${localStorage.getItem("nick_self")||"ты"}): ${youHp}/100.`,
+      aliveEnemies.length?`Живые враги: ${aliveEnemies.join(", ")}.`:`Все враги повержены.`,
+      deadEnemies.length?`Пали: ${deadEnemies.join(", ")}.`:"",
+      `Твои карты: ${handDesc}.`,
+    ].filter(Boolean).join(" ");
+    const base=allyPersona.getSystemPrompt(allyNick);
+    const sys=`${base}\n\nТЕКУЩЕЕ СОСТОЯНИЕ БОЯ: ${statusLines}\n\nОтвечай только как участник этого боя. Если партнёр пишет что-то не связанное с игрой — коротко ответь и верни разговор к бою.`;
     return deepseekChat(sys,msg,allyPersona.FALLBACKS.trade_declined??"Понял.",chat.slice(-4));
   };
   const sendChat=async()=>{
@@ -1762,7 +1778,8 @@ export default function App(){
 
           {/* Chat */}
           <div style={{background:"rgba(0,0,0,0.6)",border:"1px solid rgba(200,160,80,0.15)",
-            borderRadius:10,padding:14,display:isMobile&&activeTab!=="chat"?"none":"flex",flexDirection:"column"}}>
+            borderRadius:10,padding:14,display:isMobile&&activeTab!=="chat"?"none":"flex",flexDirection:"column",
+            ...(isMobile?{minHeight:"calc(100vh - 120px)",maxHeight:"calc(100vh - 120px)"}:{})}}>
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
               <div style={{width:28,height:28,borderRadius:"50%",background:"linear-gradient(135deg,#2a7048,#4caf82)",
                 display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,color:"#fff",fontWeight:700,fontFamily:"Georgia,serif",overflow:"hidden"}}>
@@ -1776,7 +1793,7 @@ export default function App(){
               </div>}
               {!thinking.alex&&loading&&<div style={{marginLeft:"auto",width:7,height:7,borderRadius:"50%",background:"#4caf82",animation:"pulse 1s infinite"}}/>}
             </div>
-            <div style={{flex:1,overflowY:"auto",marginBottom:10,minHeight:120,maxHeight:280}}>
+            <div style={{flex:1,overflowY:"auto",marginBottom:10,minHeight:120,maxHeight:isMobile?undefined:280}}>
               {chat.map((m,i)=><Bubble key={i} m={m} nick={allyNick}/>)}
               {typing&&(
                 <div style={{marginBottom:10,display:"flex",gap:7,alignItems:"flex-start",animation:"fadeIn 0.25s"}}>

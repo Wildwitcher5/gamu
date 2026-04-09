@@ -206,24 +206,67 @@ button:not(:disabled):hover {
   animation: comboBannerIn 0.25s ease, bannerFadeOut 0.4s ease 2s forwards;
 }
 
+/* ── Survey matrix components ────────────────────────────────────────────── */
+
+.survey-matrix-header {
+  display: flex;
+  gap: 0;
+  padding-left: 36%;
+  margin-bottom: 2px;
+}
+.survey-matrix-label {
+  width: 36%;
+}
+.bipolar-row {
+  display: flex;
+  align-items: center;
+  border-top: 1px solid #eeece8;
+  padding: 12px 0;
+}
+.bipolar-label {
+  width: 27%;
+  font-size: 13px;
+  color: #3a3228;
+  line-height: 1.45;
+  font-family: Georgia, serif;
+  font-style: italic;
+}
+.bipolar-label-left { padding-right: 10px; text-align: right; }
+.bipolar-label-right { padding-left: 10px; }
+
 /* ── Mobile responsive ───────────────────────────────────────────────────── */
 
 @media (max-width: 767px) {
   /* Survey card: reduce padding on small screens */
   .survey-inner {
-    padding: 24px 18px !important;
+    padding: 20px 14px !important;
     border-radius: 8px !important;
   }
 
-  /* Survey matrix: shrink label column slightly */
-  .survey-inner [style*="paddingLeft: 36%"],
-  .survey-inner [style*="paddingLeft:36%"] {
-    padding-left: 30% !important;
+  /* Survey matrix label column: narrower on mobile */
+  .survey-matrix-header {
+    padding-left: 28% !important;
+  }
+  .survey-matrix-label {
+    width: 28% !important;
+    font-size: 12px !important;
   }
 
-  /* Game card text scales */
-  .survey-inner [style*="fontSize: 9.5"],
-  .survey-inner [style*="fontSize:9.5"] {
-    font-size: 8.5px !important;
+  /* Bipolar matrix: narrower labels, more room for circles */
+  .bipolar-label {
+    width: 22% !important;
+    font-size: 11px !important;
   }
+
+  /* Larger touch targets */
+  .survey-inner input[type="radio"] {
+    width: 20px !important;
+    height: 20px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .survey-matrix-header { padding-left: 22% !important; }
+  .survey-matrix-label  { width: 22% !important; font-size: 11px !important; }
+  .bipolar-label        { width: 18% !important; font-size: 10px !important; }
 }

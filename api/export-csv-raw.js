@@ -54,6 +54,8 @@ const RAW_FIELDS = [
   "delta_coop",
   // Game feedback (from post-game survey)
   "game_enjoyment", "game_engagement", "game_frequency", "game_guess",
+  // Game metadata
+  "game_outcome", "game_turns", "chat_messages_sent", "block_order",
 ];
 
 function esc(val) {

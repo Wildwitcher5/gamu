@@ -35,6 +35,7 @@ const EXPORT_COLUMNS = [
   "delta_polar", "delta_traits", "delta_affect",
   "delta_dist", "delta_coop",
   "game_enjoyment", "game_engagement", "game_frequency", "game_guess",
+  "game_outcome", "game_turns", "chat_messages_sent", "block_order",
 ];
 
 function escapeCell(value) {
