@@ -1500,7 +1500,7 @@ export default function App(){
   const sendChat=async()=>{
     const msg=input.trim();if(!msg||loading)return;
     addChat("you",msg);setInput("");setLoad(true);
-    const r=await alexChatAPI(msg,gs);addChat("alex",r);setLoad(false);
+    const r=await alexChatAPI(msg,gs);if(r!=="[SKIP]")addChat("alex",r);setLoad(false);
   };
   const restart=()=>{
     const gi=createGameInit();
@@ -1781,7 +1781,7 @@ export default function App(){
               {[["🛡 Прикрой","Прикрой меня!"],["⚔ Бей!",`Бей ${en("e1")}!`],
                 ["💉 Лечи","Исцели меня!"],["💥 Совм.","Совместный удар?"],
                 ["📖 Комбо?","Какие комбо нам доступны?"]].map(([label,msg])=>(
-                <button key={label} onClick={()=>{if(!loading){addChat("you",msg);setInput("");setLoad(true);alexChatAPI(msg,gs).then(r=>{addChat("alex",r);setLoad(false);});}}}
+                <button key={label} onClick={()=>{if(!loading){addChat("you",msg);setInput("");setLoad(true);alexChatAPI(msg,gs).then(r=>{if(r!=="[SKIP]")addChat("alex",r);setLoad(false);});}}}
                   disabled={loading} style={{background:"rgba(200,160,80,0.06)",border:"1px solid rgba(200,160,80,0.2)",
                   borderRadius:6,padding:"5px 9px",color:loading?"#2a1808":"#8a7050",fontSize:10,
                   cursor:loading?"default":"pointer",fontFamily:"Georgia,serif"}}>{label}</button>

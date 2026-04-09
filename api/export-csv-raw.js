@@ -22,8 +22,8 @@ const RAW_FIELDS = [
   ...Array.from({length:4}, (_,i) => `s1_dist_out_${i+1}`),
   ...Array.from({length:4}, (_,i) => `s1_dist_in_${i+1}`),
   // S1 cooperation items
-  ...Array.from({length:4}, (_,i) => `s1_coop_out_${i+1}`),
-  ...Array.from({length:4}, (_,i) => `s1_coop_in_${i+1}`),
+  ...Array.from({length:3}, (_,i) => `s1_coop_out_${i+1}`),
+  ...Array.from({length:3}, (_,i) => `s1_coop_in_${i+1}`),
   // S1 repression items
   ...Array.from({length:5}, (_,i) => `s1_repr_out_${i+1}`),
   ...Array.from({length:5}, (_,i) => `s1_repr_in_${i+1}`),
@@ -49,8 +49,8 @@ const RAW_FIELDS = [
   "s2_affect_out", "s2_affect_in",
   ...Array.from({length:4}, (_,i) => `s2_dist_out_${i+1}`),
   ...Array.from({length:4}, (_,i) => `s2_dist_in_${i+1}`),
-  ...Array.from({length:4}, (_,i) => `s2_coop_out_${i+1}`),
-  ...Array.from({length:4}, (_,i) => `s2_coop_in_${i+1}`),
+  ...Array.from({length:3}, (_,i) => `s2_coop_out_${i+1}`),
+  ...Array.from({length:3}, (_,i) => `s2_coop_in_${i+1}`),
   ...Array.from({length:5}, (_,i) => `s2_repr_out_${i+1}`),
   ...Array.from({length:5}, (_,i) => `s2_repr_in_${i+1}`),
   ...Array.from({length:4}, (_,i) => `s2_threat_out_${i+1}`),
