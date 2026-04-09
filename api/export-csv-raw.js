@@ -24,12 +24,6 @@ const RAW_FIELDS = [
   // S1 cooperation items
   ...Array.from({length:3}, (_,i) => `s1_coop_out_${i+1}`),
   ...Array.from({length:3}, (_,i) => `s1_coop_in_${i+1}`),
-  // S1 repression items
-  ...Array.from({length:5}, (_,i) => `s1_repr_out_${i+1}`),
-  ...Array.from({length:5}, (_,i) => `s1_repr_in_${i+1}`),
-  // S1 threat items
-  ...Array.from({length:4}, (_,i) => `s1_threat_out_${i+1}`),
-  ...Array.from({length:4}, (_,i) => `s1_threat_in_${i+1}`),
   // S1 contact items
   ...Array.from({length:4}, (_,i) => `s1_contact_out_${i+1}`),
   ...Array.from({length:4}, (_,i) => `s1_contact_in_${i+1}`),
@@ -38,8 +32,6 @@ const RAW_FIELDS = [
   "s1_affect_diff",
   "s1_dist_in_mean", "s1_dist_out_mean", "s1_dist_diff",
   "s1_coop_in_mean", "s1_coop_out_mean", "s1_coop_diff",
-  "s1_repr_in_mean", "s1_repr_out_mean", "s1_repr_diff",
-  "s1_threat_in_mean", "s1_threat_out_mean", "s1_threat_diff",
   "s1_polar_index",
   // S2 direction / ingroup (same as s1, re-asked for stability check)
   "s2_direction", "s2_ingroup",
@@ -51,21 +43,15 @@ const RAW_FIELDS = [
   ...Array.from({length:4}, (_,i) => `s2_dist_in_${i+1}`),
   ...Array.from({length:3}, (_,i) => `s2_coop_out_${i+1}`),
   ...Array.from({length:3}, (_,i) => `s2_coop_in_${i+1}`),
-  ...Array.from({length:5}, (_,i) => `s2_repr_out_${i+1}`),
-  ...Array.from({length:5}, (_,i) => `s2_repr_in_${i+1}`),
-  ...Array.from({length:4}, (_,i) => `s2_threat_out_${i+1}`),
-  ...Array.from({length:4}, (_,i) => `s2_threat_in_${i+1}`),
   // S2 computed indices
   "s2_traits_in_mean", "s2_traits_out_mean", "s2_traits_diff",
   "s2_affect_diff",
   "s2_dist_in_mean", "s2_dist_out_mean", "s2_dist_diff",
   "s2_coop_in_mean", "s2_coop_out_mean", "s2_coop_diff",
-  "s2_repr_in_mean", "s2_repr_out_mean", "s2_repr_diff",
-  "s2_threat_in_mean", "s2_threat_out_mean", "s2_threat_diff",
   "s2_polar_index",
   // Deltas
   "delta_polar", "delta_traits", "delta_affect", "delta_dist",
-  "delta_coop", "delta_repr", "delta_threat",
+  "delta_coop",
   // Game feedback (from post-game survey)
   "game_enjoyment", "game_engagement", "game_frequency", "game_guess",
 ];

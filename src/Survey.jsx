@@ -166,8 +166,7 @@ function avg(arr) {
 }
 
 function computeIndices(pfx, traitsOut, traitsIn, affectOut, affectIn,
-                                distOut, distIn, coopOut, coopIn,
-                                threatOut, threatIn) {
+                                distOut, distIn, coopOut, coopIn) {
   const trOutM   = r3(avg(traitsOut));
   const trInM    = r3(avg(traitsIn));
   const trDiff   = r3(trInM - trOutM);
@@ -182,11 +181,6 @@ function computeIndices(pfx, traitsOut, traitsIn, affectOut, affectIn,
   const coopInM  = r3(avg(coopIn));
   const coopDiff = r3(coopInM - coopOutM);
 
-  const thrOutM  = r3(avg(threatOut)); // reversed: out − in
-  const thrInM   = r3(avg(threatIn));
-  const thrDiff  = r3(thrOutM - thrInM);
-
-  /* polar_index = mean of normalised diffs; threat excluded (it's a mediator) */
   const polarIdx = r3((trDiff/6 + affDiff/6 + distDiff/4 + coopDiff/4) / 4);
 
   return {
@@ -200,9 +194,6 @@ function computeIndices(pfx, traitsOut, traitsIn, affectOut, affectIn,
     [`${pfx}_coop_in_mean`]:    coopInM,
     [`${pfx}_coop_out_mean`]:   coopOutM,
     [`${pfx}_coop_diff`]:       coopDiff,
-    [`${pfx}_threat_in_mean`]:  thrInM,
-    [`${pfx}_threat_out_mean`]: thrOutM,
-    [`${pfx}_threat_diff`]:     thrDiff,
     [`${pfx}_polar_index`]:     polarIdx,
   };
 }
@@ -516,13 +507,24 @@ export function ExportScreen({ onClose }) {
     15 gameQ
     16 final
 */
-export default function Survey({ type, onComplete }) {
+export default function Survey({ type, blockOrder = "out_first", onComplete }) {
   const isPre = type === "pre";
-  const TOTAL = isPre ? 15 : 14;
+  const TOTAL = isPre ? 13 : 12;
+  const outFirst = blockOrder !== "in_first";
 
   const IDX = isPre
-    ? { welcome:0, demo:1, dir:2, ingId:3, traitsOut:4, traitsIn:5, affectOut:6, affectIn:7, distOut:8, distIn:9, coopOut:10, coopIn:11, threatOut:12, threatIn:13, final:14 }
-    : { welcome:0,          ingId:1, traitsOut:2, traitsIn:3, affectOut:4, affectIn:5, distOut:6,  distIn:7,  coopOut:8,  coopIn:9,  threatOut:10, threatIn:11, gameQ:12, final:13 };
+    ? { welcome:0, demo:1, dir:2, ingId:3,
+        traitsOut:outFirst?4:5, traitsIn:outFirst?5:4,
+        affectOut:outFirst?6:7, affectIn:outFirst?7:6,
+        distOut:outFirst?8:9,   distIn:outFirst?9:8,
+        coopOut:outFirst?10:11, coopIn:outFirst?11:10,
+        final:12 }
+    : { welcome:0, ingId:1,
+        traitsOut:outFirst?2:3, traitsIn:outFirst?3:2,
+        affectOut:outFirst?4:5, affectIn:outFirst?5:4,
+        distOut:outFirst?6:7,   distIn:outFirst?7:6,
+        coopOut:outFirst?8:9,   coopIn:outFirst?9:8,
+        gameQ:10, final:11 };
 
   /* Cookie check — pre only */
   const [cookieScreen, setCookieScreen] = useState(() => isPre && getCookie("pol_study_done") ? "check" : null);
@@ -547,8 +549,6 @@ export default function Survey({ type, onComplete }) {
     distIn:     [null, null, null, null],
     coopOut:    [null, null, null],
     coopIn:     [null, null, null],
-    threatOut:  [null, null, null, null],
-    threatIn:   [null, null, null, null],
     gameEnjoyment:  null,
     gameEngagement: null,
     gameFrequency:  null,
@@ -588,8 +588,6 @@ export default function Survey({ type, onComplete }) {
       case IDX.distIn:    return ans.distIn.every(v => v !== null);
       case IDX.coopOut:   return ans.coopOut.every(v => v !== null);
       case IDX.coopIn:    return ans.coopIn.every(v => v !== null);
-      case IDX.threatOut: return ans.threatOut.every(v => v !== null);
-      case IDX.threatIn:  return ans.threatIn.every(v => v !== null);
       case IDX.final:     return true;
       default:
         if (isPre && screen === IDX.demo) {
@@ -623,12 +621,9 @@ export default function Survey({ type, onComplete }) {
       ...Object.fromEntries(ans.distIn.map(   (v,i) => [`s1_dist_in_${i+1}`,    v])),
       ...Object.fromEntries(ans.coopOut.map(  (v,i) => [`s1_coop_out_${i+1}`,   v])),
       ...Object.fromEntries(ans.coopIn.map(   (v,i) => [`s1_coop_in_${i+1}`,    v])),
-      ...Object.fromEntries(ans.threatOut.map((v,i) => [`s1_threat_out_${i+1}`, v])),
-      ...Object.fromEntries(ans.threatIn.map( (v,i) => [`s1_threat_in_${i+1}`,  v])),
       ...computeIndices("s1",
           ans.traitsOut, ans.traitsIn, ans.affectOut, ans.affectIn,
-          ans.distOut,   ans.distIn,   ans.coopOut,   ans.coopIn,
-          ans.threatOut,  ans.threatIn),
+          ans.distOut,   ans.distIn,   ans.coopOut,   ans.coopIn),
     };
     saveCurrentSession(updated);
     return updated;
@@ -638,8 +633,7 @@ export default function Survey({ type, onComplete }) {
     const current = getCurrentSession() || {};
     const s2idx = computeIndices("s2",
       ans.traitsOut, ans.traitsIn, ans.affectOut, ans.affectIn,
-      ans.distOut,   ans.distIn,   ans.coopOut,   ans.coopIn,
-      ans.threatOut,  ans.threatIn);
+      ans.distOut,   ans.distIn,   ans.coopOut,   ans.coopIn);
     const updated = {
       ...current,
       status: "complete",
@@ -654,15 +648,12 @@ export default function Survey({ type, onComplete }) {
       ...Object.fromEntries(ans.distIn.map(   (v,i) => [`s2_dist_in_${i+1}`,    v])),
       ...Object.fromEntries(ans.coopOut.map(  (v,i) => [`s2_coop_out_${i+1}`,   v])),
       ...Object.fromEntries(ans.coopIn.map(   (v,i) => [`s2_coop_in_${i+1}`,    v])),
-      ...Object.fromEntries(ans.threatOut.map((v,i) => [`s2_threat_out_${i+1}`, v])),
-      ...Object.fromEntries(ans.threatIn.map( (v,i) => [`s2_threat_in_${i+1}`,  v])),
       ...s2idx,
       delta_polar:  r3((s2idx.s2_polar_index || 0) - (current.s1_polar_index  || 0)),
       delta_traits: r3((s2idx.s2_traits_diff || 0) - (current.s1_traits_diff  || 0)),
       delta_affect: r3((s2idx.s2_affect_diff || 0) - (current.s1_affect_diff  || 0)),
       delta_dist:   r3((s2idx.s2_dist_diff   || 0) - (current.s1_dist_diff    || 0)),
       delta_coop:   r3((s2idx.s2_coop_diff   || 0) - (current.s1_coop_diff    || 0)),
-      delta_threat: r3((s2idx.s2_threat_diff || 0) - (current.s1_threat_diff  || 0)),
       game_enjoyment:  ans.gameEnjoyment,
       game_engagement: ans.gameEngagement,
       game_frequency:  ans.gameFrequency,
@@ -1032,52 +1023,6 @@ export default function Survey({ type, onComplete }) {
       );
     }
 
-    /* Block F: Threat — outgroup */
-    if (screen === IDX.threatOut) {
-      return (
-        <>
-          <BodyText style={{ marginBottom: 16 }}>
-            Как вам кажется, насколько {gt.outTxt} угрожают...
-          </BodyText>
-          <SurveyMatrix
-            items={[
-              "Распространённым среди россиян ценностям",
-              "Материальному благополучию россиян",
-              "Физической безопасности россиян",
-              "Привычному для россиян образу жизни",
-            ]}
-            scale={SCALE_THREAT}
-            values={ans.threatOut}
-            onChange={(ri, v) => setArr("threatOut", ri, v)}
-            uid={`${type}_tout`}
-          />
-        </>
-      );
-    }
-
-    /* Block F: Threat — ingroup */
-    if (screen === IDX.threatIn) {
-      return (
-        <>
-          <BodyText style={{ marginBottom: 16 }}>
-            Как вам кажется, насколько {gt.inTxt} угрожают...
-          </BodyText>
-          <SurveyMatrix
-            items={[
-              "Распространённым среди россиян ценностям",
-              "Материальному благополучию россиян",
-              "Физической безопасности россиян",
-              "Привычному для россиян образу жизни",
-            ]}
-            scale={SCALE_THREAT}
-            values={ans.threatIn}
-            onChange={(ri, v) => setArr("threatIn", ri, v)}
-            uid={`${type}_tin`}
-          />
-        </>
-      );
-    }
-
     /* Game questions (post only) */
     if (!isPre && screen === IDX.gameQ) {
       return (
@@ -1127,7 +1072,7 @@ export default function Survey({ type, onComplete }) {
   /* ── Render ─────────────────────────────────────────────────── */
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(6,4,2,0.97)", display: "flex", alignItems: "flex-start", justifyContent: "center", zIndex: 1500, backdropFilter: "blur(8px)", overflowY: "auto", padding: "32px 16px 48px" }}>
-      <div style={{ background: "#faf8f4", borderRadius: 12, padding: "44px 48px", width: "100%", maxWidth: 700, color: "#1a1410", fontFamily: "Georgia, serif", boxShadow: "0 24px 80px rgba(0,0,0,0.7)", animation: "scaleIn 0.25s ease", boxSizing: "border-box", marginBottom: 32 }}>
+      <div className="survey-inner" style={{ background: "#faf8f4", borderRadius: 12, padding: "44px 48px", width: "100%", maxWidth: 700, color: "#1a1410", fontFamily: "Georgia, serif", boxShadow: "0 24px 80px rgba(0,0,0,0.7)", animation: "scaleIn 0.25s ease", boxSizing: "border-box", marginBottom: 32 }}>
 
         {/* Progress bar */}
         <div style={{ height: 4, background: "#e8e4de", borderRadius: 2, marginBottom: 6 }}>

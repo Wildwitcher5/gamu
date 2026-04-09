@@ -111,8 +111,8 @@ const AVATARS=[
  * regardless of format (.jpg .jpeg .jfif .png .webp .svg …).
  * Just drop new images into those folders — no code changes needed.
  */
-const CONDITIONS = ["cond_1","cond_2","cond_3","cond_4"];
-function assignCondition() { return CONDITIONS[Math.floor(Math.random()*4)]; }
+const CONDITIONS = ["cond_1","cond_2","cond_3"];
+function assignCondition() { return CONDITIONS[Math.floor(Math.random()*3)]; }
 
 function pickAvatar(folder, exclude=[]) {
   const files = (AVATAR_MANIFEST[folder]?.length
@@ -126,12 +126,11 @@ function assignAvatars(condition, ingroup) {
   // outFolder = political opposite of the participant's group
   const outFolder = ingroup === "approve" ? "against" : "pro";
   const inFolder  = ingroup === "approve" ? "pro"     : "against";
-  const partnerFolder =
-    condition === "cond_4" ? "neutral" : outFolder;
+  const partnerFolder = outFolder;
   const oppFolder =
     condition === "cond_1" ? inFolder  :
     condition === "cond_2" ? outFolder :
-    "neutral"; // cond_3 and cond_4
+    "neutral"; // cond_3
   const partner    = pickAvatar(partnerFolder);
   const opponent1  = pickAvatar(oppFolder, [partner].filter(Boolean));
   const opponent2  = pickAvatar(oppFolder, [partner, opponent1].filter(Boolean));
@@ -685,19 +684,13 @@ function CounterAnimation({ trigger }) {
 /* ── Condition Brief screen shown between Survey1 and game start ─────── */
 function ConditionBriefScreen({ condition, ingroup, partnerAvatar, allyNick, onStart }) {
   const gt = getGroupText(ingroup);
-  let partnerLine, opponentLine;
-  if (condition === "cond_4") {
-    partnerLine  = "В этой игре вы будете играть в одной команде с другим участником.";
-    opponentLine = "Вместе вы будете играть против другой команды.";
-  } else {
-    partnerLine = `В этой игре вы будете играть в одной команде с человеком, который считает, что дела в России идут в ${gt.outDir} направлении.`;
-    if (condition === "cond_1")
-      opponentLine = `Вместе вы будете играть против команды, которая считает, что дела в России идут в ${gt.inDir} направлении.`;
-    else if (condition === "cond_2")
-      opponentLine = `Вместе вы будете играть против другой команды, участники которой также считают, что дела в России идут в ${gt.outDir} направлении.`;
-    else
-      opponentLine = "Вместе вы будете играть против команды, участники которой не определились со своей позицией по поводу происходящего в стране.";
-  }
+  const partnerLine = `В этой игре вы будете играть в одной команде с человеком, который считает, что дела в России идут в ${gt.outDir} направлении.`;
+  const opponentLine =
+    condition === "cond_1"
+      ? `Вместе вы будете играть против команды, которая считает, что дела в России идут в ${gt.inDir} направлении.`
+      : condition === "cond_2"
+      ? `Вместе вы будете играть против другой команды, участники которой также считают, что дела в России идут в ${gt.outDir} направлении.`
+      : "Вместе вы будете играть против команды, участники которой не определились со своей позицией по поводу происходящего в стране.";
   return (
     <div style={{position:"fixed",inset:0,background:"rgba(6,4,2,0.97)",display:"flex",
       alignItems:"center",justifyContent:"center",zIndex:1500,backdropFilter:"blur(8px)",
@@ -850,6 +843,14 @@ export default function App(){
   const [showSurvey2,setShowSurvey2]=useState(false);
   const [survey1Data,setSurvey1Data]=useState(null);
   const [survey2Data,setSurvey2Data]=useState(null);
+  const [blockOrder]=useState(()=>Math.random()<0.5?"out_first":"in_first");
+  const [isMobile,setIsMobile]=useState(()=>window.innerWidth<=767);
+  const [activeTab,setActiveTab]=useState("battle");
+  useEffect(()=>{
+    const onResize=()=>setIsMobile(window.innerWidth<=767);
+    window.addEventListener("resize",onResize);
+    return()=>window.removeEventListener("resize",onResize);
+  },[]);
   // showExport removed — export is now server-side via /api/export
   const [showCondBrief,setShowCondBrief]=useState(false);
   const [condition,setCondition]=useState(null);
@@ -1569,7 +1570,7 @@ export default function App(){
         onClose={()=>setPreview(null)}
         en={en}/>}
 
-      <div style={{position:"relative",zIndex:1,maxWidth:1100,margin:"0 auto",padding:"10px 14px 6px"}}>
+      <div style={{position:"relative",zIndex:1,maxWidth:1100,margin:"0 auto",padding:isMobile?"8px 8px 64px":"10px 14px 6px"}}>
 
         {/* ── Header ─────────────────────────────────────────────────────────── */}
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
@@ -1598,7 +1599,7 @@ export default function App(){
         </div>
 
         {/* ── Enemies row ──────────────────────────────────────────────────── */}
-        <div data-tutorial="enemies" style={{display:"flex",gap:12,marginBottom:12}}>
+        <div data-tutorial="enemies" style={{display:isMobile&&activeTab!=="battle"?"none":"flex",gap:12,marginBottom:12}}>
           {[
             {key:"e1",name:en("e1"),bar:"#e05252",ring:"#e05252"},
             {key:"e2",name:en("e2"),bar:"#a03070",ring:"#a03070"},
@@ -1651,8 +1652,8 @@ export default function App(){
         </div>
 
         {/* ── Middle: Alex+Log | Chat ──────────────────────────────────────── */}
-        <div style={{display:"grid",gridTemplateColumns:"1fr 340px",gap:12,marginBottom:10}}>
-          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+        <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 340px",gap:12,marginBottom:10}}>
+          <div style={{display:isMobile&&activeTab!=="battle"?"none":"flex",flexDirection:"column",gap:8}}>
 
             {/* Alex block */}
             <div data-tutorial="ally" data-entity="alex" style={{background:"linear-gradient(135deg,rgba(10,25,18,0.95),rgba(5,15,10,0.98))",
@@ -1749,7 +1750,7 @@ export default function App(){
 
           {/* Chat */}
           <div style={{background:"rgba(0,0,0,0.6)",border:"1px solid rgba(200,160,80,0.15)",
-            borderRadius:10,padding:14,display:"flex",flexDirection:"column"}}>
+            borderRadius:10,padding:14,display:isMobile&&activeTab!=="chat"?"none":"flex",flexDirection:"column"}}>
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
               <div style={{width:28,height:28,borderRadius:"50%",background:"linear-gradient(135deg,#2a7048,#4caf82)",
                 display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,color:"#fff",fontWeight:700,fontFamily:"Georgia,serif",overflow:"hidden"}}>
@@ -1802,7 +1803,7 @@ export default function App(){
         </div>
 
         {/* ── Hand area ──────────────────────────────────────────────────────── */}
-        <div data-tutorial="hand" style={{background:"rgba(0,0,0,0.45)",border:"1px solid rgba(200,160,80,0.12)",
+        <div data-tutorial="hand" style={{display:isMobile&&activeTab!=="cards"?"none":undefined,background:"rgba(0,0,0,0.45)",border:"1px solid rgba(200,160,80,0.12)",
           borderRadius:10,padding:"10px 14px",marginBottom:10}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
             <div style={{fontSize:9,letterSpacing:2,color:"#4a3010",fontFamily:"Georgia,serif"}}>РУКА</div>
@@ -1849,7 +1850,7 @@ export default function App(){
         </div>
 
         {/* ── Bottom bar ─────────────────────────────────────────────────────── */}
-        <div style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",
+        <div style={{display:isMobile&&activeTab!=="cards"?"none":"flex",alignItems:"center",gap:12,padding:"10px 14px",
           background:"rgba(0,0,0,0.65)",border:"1px solid rgba(200,160,80,0.15)",
           borderRadius:10,flexWrap:"wrap"}}>
 
@@ -1947,6 +1948,31 @@ export default function App(){
         </div>
 
       </div>
+
+      {/* Mobile tab bar */}
+      {isMobile&&(
+        <div style={{position:"fixed",bottom:0,left:0,right:0,height:56,zIndex:200,
+          display:"flex",background:"rgba(8,5,2,0.97)",
+          borderTop:"1px solid rgba(200,160,80,0.25)",backdropFilter:"blur(4px)"}}>
+          {[
+            {tab:"battle",label:"⚔ Бой"},
+            {tab:"cards", label:"🎴 Карты"},
+            {tab:"chat",  label:"💬 Чат"},
+          ].map(({tab,label})=>(
+            <button key={tab} onClick={()=>setActiveTab(tab)} style={{
+              flex:1,border:"none",cursor:"pointer",
+              background:activeTab===tab?"rgba(200,160,80,0.15)":"transparent",
+              color:activeTab===tab?"#c8b080":"#5a4a30",
+              fontSize:11,fontFamily:"Georgia,serif",
+              display:"flex",flexDirection:"column",
+              alignItems:"center",justifyContent:"center",gap:3,
+              borderTop:activeTab===tab?"2px solid rgba(200,160,80,0.6)":"2px solid transparent",
+              transition:"all 0.15s"}}>
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Trade modal */}
       {tradeOffer&&phase!=="mulligan"&&(
@@ -2168,7 +2194,7 @@ export default function App(){
       {showTutorial&&!showSetup&&!showSurvey1&&!showCondBrief&&!showMatchmaking&&<Tutorial allyNick={allyNick} e1Nick={e1Nick} e2Nick={e2Nick} onEnd={()=>setShowTutorial(false)}/>}
 
       {/* Pre-game survey — shown first, before setup screen */}
-      {showSurvey1&&<Survey type="pre" onComplete={data=>{
+      {showSurvey1&&<Survey type="pre" blockOrder={blockOrder} onComplete={data=>{
         setSurvey1Data(data);
         setShowSurvey1(false);
         const cond = assignCondition();
@@ -2202,7 +2228,7 @@ export default function App(){
       }}/>}
 
       {/* Post-game survey — shown after game ends, above game-over screen */}
-      {showSurvey2&&<Survey type="post" onComplete={data=>{setSurvey2Data(data);setShowSurvey2(false);}}/>}
+      {showSurvey2&&<Survey type="post" blockOrder={blockOrder} onComplete={data=>{setSurvey2Data(data);setShowSurvey2(false);}}/>}
 
       {/* Export: /api/export-csv?secret=YOUR_SECRET (server-side) */}
 

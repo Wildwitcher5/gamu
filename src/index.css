@@ -205,3 +205,25 @@ button:not(:disabled):hover {
   letter-spacing: 2px;
   animation: comboBannerIn 0.25s ease, bannerFadeOut 0.4s ease 2s forwards;
 }
+
+/* ── Mobile responsive ───────────────────────────────────────────────────── */
+
+@media (max-width: 767px) {
+  /* Survey card: reduce padding on small screens */
+  .survey-inner {
+    padding: 24px 18px !important;
+    border-radius: 8px !important;
+  }
+
+  /* Survey matrix: shrink label column slightly */
+  .survey-inner [style*="paddingLeft: 36%"],
+  .survey-inner [style*="paddingLeft:36%"] {
+    padding-left: 30% !important;
+  }
+
+  /* Game card text scales */
+  .survey-inner [style*="fontSize: 9.5"],
+  .survey-inner [style*="fontSize:9.5"] {
+    font-size: 8.5px !important;
+  }
+}
