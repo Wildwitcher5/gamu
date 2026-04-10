@@ -329,21 +329,17 @@ function BipolarMatrix({ items, values, onChange, uid }) {
   PRE (13 screens):
     0  welcome
     1  dir
-    2  ingId
-    3/4  traitsOut/traitsIn (swapped by blockOrder)
-    5/6  affectOut/affectIn
-    7/8  distOut/distIn
-    9/10 coopOut/coopIn
-    11 demo  ← demographics moved to end to reduce priming
+    2  ingId  (always user's own group — not affected by blockOrder)
+    3–6  Block A: traitsA, affectA, distA, coopA  (A = out if outFirst, else in)
+    7–10 Block B: traitsB, affectB, distB, coopB  (B = in if outFirst, else out)
+    11 demo
     12 final
 
   POST (12 screens):
     0  welcome
     1  ingId
-    2/3  traitsOut/traitsIn
-    4/5  affectOut/affectIn
-    6/7  distOut/distIn
-    8/9  coopOut/coopIn
+    2–5  Block A: traitsA, affectA, distA, coopA
+    6–9  Block B: traitsB, affectB, distB, coopB
     10 gameQ
     11 final
 */
@@ -414,18 +410,24 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete 
    */
   const outFirst = blockOrder === "disapprove_first";
 
+  /*
+   * Block ordering: ALL questions for one direction come BEFORE all questions for the other.
+   * outFirst=true  → steps 3-6 are outgroup (неправильно), steps 7-10 are ingroup (правильно)
+   * outFirst=false → steps 3-6 are ingroup  (правильно),   steps 7-10 are outgroup (неправильно)
+   * Step 3 (ingId) is always about the user's own group and is not affected by block order.
+   */
   const IDX = isPre
     ? { welcome:0, dir:1, ingId:2,
-        traitsOut:outFirst?3:4, traitsIn:outFirst?4:3,
-        affectOut:outFirst?5:6, affectIn:outFirst?6:5,
-        distOut:outFirst?7:8,   distIn:outFirst?8:7,
-        coopOut:outFirst?9:10,  coopIn:outFirst?10:9,
+        traitsOut:outFirst?3:7,  traitsIn:outFirst?7:3,
+        affectOut:outFirst?4:8,  affectIn:outFirst?8:4,
+        distOut:  outFirst?5:9,  distIn:  outFirst?9:5,
+        coopOut:  outFirst?6:10, coopIn:  outFirst?10:6,
         demo:11, final:12 }
     : { welcome:0, ingId:1,
-        traitsOut:outFirst?2:3, traitsIn:outFirst?3:2,
-        affectOut:outFirst?4:5, affectIn:outFirst?5:4,
-        distOut:outFirst?6:7,   distIn:outFirst?7:6,
-        coopOut:outFirst?8:9,   coopIn:outFirst?9:8,
+        traitsOut:outFirst?2:6,  traitsIn:outFirst?6:2,
+        affectOut:outFirst?3:7,  affectIn:outFirst?7:3,
+        distOut:  outFirst?4:8,  distIn:  outFirst?8:4,
+        coopOut:  outFirst?5:9,  coopIn:  outFirst?9:5,
         gameQ:10, final:11 };
 
   /* ── Validation ─────────────────────────────────────────────── */
