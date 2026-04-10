@@ -29,10 +29,13 @@ const BG        = "/assets/bg.jpeg";
 const COMBO_ART = "/assets/Combo.jpeg";
 const COMBO_ARTS = {
   "Ядовитый огонь 🔥☠️": "/assets/piosonrage.jpeg",
-  "Засада 🪤⚔️": "/assets/ambush.jpeg",
-  "Крепость 🛡️💉": "/assets/fortress.jpeg",
-  "Натиск ⚔️⚔️⚔️": "/assets/onslaught.jpeg",
-  "💥 СОВМЕСТНЫЙ УДАР": "/assets/doublecombo.jpeg",
+  "Двойной удар ⚔️⚔️":   "/assets/cards/attack.jpeg",
+  "Натиск ⚔️⚔️⚔️":        "/assets/onslaught.jpeg",
+  "Крепость 🛡️💉":        "/assets/fortress.jpeg",
+  "Засада 🪤⚔️":           "/assets/ambush.jpeg",
+  "Шквал ⚡🔥":            "/assets/cards/rage.jpeg",
+  "Кровавый яд ☠️🩸":     "/assets/cards/poison.jpeg",
+  "💥 СОВМЕСТНЫЙ УДАР":   "/assets/doublecombo.jpeg",
 };
 const getComboArt = n => COMBO_ARTS[n] ?? COMBO_ART;
 const JOINT_IMG = "/assets/doublecombo.jpeg";
@@ -1862,13 +1865,24 @@ export default function App(){
             <div style={{fontSize:10,color:"#5a4020",fontFamily:"Georgia,serif"}}>В руке: {hand.length} / 5</div>
           </div>
           {showComboRef&&(
-            <div style={{background:"rgba(0,0,0,0.35)",border:"1px solid rgba(200,160,80,0.15)",
-              borderRadius:8,padding:"8px 10px",marginBottom:8,display:"flex",flexWrap:"wrap",gap:4}}>
+            <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:4,
+              marginBottom:8,scrollbarWidth:"none"}}>
               {COMBOS.map(c=>(
-                <div key={c.name} style={{fontSize:9,color:"#9a8050",fontFamily:"Georgia,serif",
-                  background:"rgba(200,154,60,0.07)",border:"1px solid rgba(200,154,60,0.18)",
-                  borderRadius:5,padding:"3px 8px",whiteSpace:"nowrap"}}>
-                  {c.needs.map(t=>CARDS[t]?.e).join("")} → {c.name}
+                <div key={c.name} style={{flexShrink:0,width:64,
+                  background:"rgba(0,0,0,0.55)",border:"1px solid rgba(200,154,60,0.35)",
+                  borderRadius:6,overflow:"hidden",display:"flex",flexDirection:"column"}}>
+                  <img src={getComboArt(c.name)} alt="" style={{
+                    width:64,height:58,objectFit:"cover",display:"block"}}/>
+                  <div style={{padding:"3px 4px 4px",textAlign:"center"}}>
+                    <div style={{fontSize:9,color:"#c8a060",letterSpacing:0.5}}>
+                      {c.needs.map(t=>CARDS[t]?.e).join("+")}
+                    </div>
+                    <div style={{fontSize:7,color:"#8a7050",fontFamily:"Georgia,serif",
+                      marginTop:1,lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",
+                      display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>
+                      {c.name}
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
