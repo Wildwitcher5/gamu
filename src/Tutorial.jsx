@@ -91,7 +91,15 @@ function getTutorialSteps(nick, e1, e2) {
   ];
 }
 
-export default function Tutorial({ onEnd, allyNick, e1Nick, e2Nick }) {
+// Maps tutorial target selectors to the mobile tab that contains them
+const TAB_FOR_TARGET = {
+  '[data-tutorial="enemies"]': "battle",
+  '[data-tutorial="ally"]': "battle",
+  '[data-tutorial="ap"]': "battle",
+  '[data-tutorial="hand"]': "cards",
+};
+
+export default function Tutorial({ onEnd, allyNick, e1Nick, e2Nick, setActiveTab }) {
   const steps = getTutorialSteps(allyNick, e1Nick, e2Nick);
   const [step, setStep] = useState(0);
   const [targetRect, setTargetRect] = useState(null);
@@ -106,6 +114,11 @@ export default function Tutorial({ onEnd, allyNick, e1Nick, e2Nick }) {
   }, []);
 
   useEffect(() => {
+    const s = steps[step];
+    // On mobile, switch to the tab that contains the target element before positioning
+    if (isMobile && setActiveTab && s.target && TAB_FOR_TARGET[s.target]) {
+      setActiveTab(TAB_FOR_TARGET[s.target]);
+    }
     const timer = setTimeout(updatePositions, 80);
     window.addEventListener("resize", updatePositions);
     return () => {

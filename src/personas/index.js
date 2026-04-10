@@ -1,14 +1,13 @@
-import * as pro from "./pro.js";
-import * as anti from "./anti.js";
+import { NICKNAMES, getSystemPrompt } from "./ally.js";
 
 /**
  * Select persona based on participant's ingroup.
- * ingroup="approve"   → anti (partner disapproves of Russia's course)
- * ingroup="disapprove"→ pro  (partner approves of Russia's course)
+ * ingroup="approve"    → ally with anti stance (partner disapproves of Russia's course)
+ * ingroup="disapprove" → ally with pro stance  (partner approves of Russia's course)
  */
 export function selectPersona(_condition, ingroup) {
-  if (ingroup === "approve") return anti;
-  return pro;
+  const stance = ingroup === "approve" ? "anti" : "pro";
+  return { NICKNAMES, getSystemPrompt: (nick) => getSystemPrompt(nick, stance) };
 }
 
 export function pickNickname(persona) {

@@ -853,6 +853,7 @@ export default function App(){
   const [isMobile,setIsMobile]=useState(()=>window.innerWidth<=767);
   const [activeTab,setActiveTab]=useState("battle");
   const activeTabRef=useRef("battle");
+  const switchTab=(tab)=>{setActiveTab(tab);activeTabRef.current=tab;};
   const [unreadChat,setUnreadChat]=useState(0);
   const chatMsgCountRef=useRef(0);
   useEffect(()=>{
@@ -1848,7 +1849,7 @@ export default function App(){
         )}
 
         {/* ── Hand area ──────────────────────────────────────────────────────── */}
-        <div data-tutorial="hand" style={{display:isMobile&&activeTab!=="cards"?"none":undefined,background:"rgba(0,0,0,0.45)",border:"1px solid rgba(200,160,80,0.12)",
+        <div data-tutorial="hand" style={{display:isMobile&&activeTab!=="cards"?"none":"flex",background:"rgba(0,0,0,0.45)",border:"1px solid rgba(200,160,80,0.12)",
           borderRadius:10,padding:"10px 14px",marginBottom:10}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
             <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -2261,7 +2262,7 @@ export default function App(){
 
       {/* Tutorial overlay */}
       {showMatchmaking&&<MatchmakingScreen onReady={()=>setShowMatchmaking(false)}/>}
-      {showTutorial&&!showSetup&&!showSurvey1&&!showCondBrief&&!showMatchmaking&&<Tutorial allyNick={allyNick} e1Nick={e1Nick} e2Nick={e2Nick} onEnd={()=>setShowTutorial(false)}/>}
+      {showTutorial&&!showSetup&&!showSurvey1&&!showCondBrief&&!showMatchmaking&&<Tutorial allyNick={allyNick} e1Nick={e1Nick} e2Nick={e2Nick} onEnd={()=>setShowTutorial(false)} setActiveTab={switchTab}/>}
 
       {/* Pre-game survey — shown first, before setup screen */}
       {showSurvey1&&<Survey type="pre" blockOrder={blockOrder} onComplete={data=>{
