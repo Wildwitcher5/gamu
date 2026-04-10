@@ -1058,7 +1058,10 @@ export default function App(){
     else{setPlayed(pl=>[...pl,{card,target:tgt}]);setPreview(null);}
   };
 
-  /* ── alexSpeak — situational chat via LLM (falls back to FALLBACKS) ── */
+  /* ── alexSpeak — situational chat via LLM ───────────────────────────── */
+  // Minimal emergency strings used ONLY when network fails on forced events
+  const EMERGENCY_MSG={trade_offer:"поменяемся?",trade_accepted:"ок",trade_declined:"ок",
+    victory:"gg",defeat:"бывает",ally_down:"нужна карта Возрождения",revived:"спасибо"};
   const alexSpeak=async(eventType,g)=>{
     const now=Date.now();
     if(eventType==="ally_down"){if(allyDownSentRef.current)return;allyDownSentRef.current=true;}
@@ -1068,8 +1071,7 @@ export default function App(){
     lastAlexSpeakRef.current=now;
     const persona=allyPersona;
     const nick=allyNick;
-    const fallback=persona?.FALLBACKS?.[eventType]??"Понял.";
-    if(!persona){addChat("alex",fallback);return;}
+    if(!persona){if(forceSpeak&&EMERGENCY_MSG[eventType])addChat("alex",EMERGENCY_MSG[eventType]);return;}
     const allyHp=g?.alex?.hp??"?";
     const youHp=g?.you?.hp??"?";
     const hand=alexHand.map(type=>({
@@ -1107,10 +1109,11 @@ export default function App(){
     const text=await llmChat(
       persona.getSystemPrompt(nick),
       hints[eventType]??"Скажи что-нибудь уместное по ситуации в бою — очень коротко.",
-      fallback,
+      EMERGENCY_MSG[eventType]??null,
       chat.slice(-4)
     );
-    addChat("alex",text===SKIP?fallback:text);
+    if(text&&text!==SKIP)addChat("alex",text);
+    else if(forceSpeak&&EMERGENCY_MSG[eventType])addChat("alex",EMERGENCY_MSG[eventType]);
   };
 
   /* ── Alex joint ─────────────────────────────────────────────────────── */
@@ -1492,14 +1495,12 @@ export default function App(){
     const persona=allyPersona;
     const nick=allyNick;
     const ctx={allyHp:g.alex.hp,youHp:g.you.hp,enemies:alive.map(k=>`${en(k)} ${g[k].hp}HP`).join(", ")||"повержены"};
-    const fallbacks={attack:persona?.FALLBACKS?.enemy_low_hp??"Атакую!",shield:persona?.FALLBACKS?.low_hp??"Держусь.",heal:persona?.FALLBACKS?.took_heavy_hit??"Лечу тебя."};
     const actionHint=actionType==="attack"
-      ?`Атакуешь ${weakest?en(weakest):"врага"} (${g[weakest??'e1']?.hp??0} здоровья). 1 короткая реплика.`
-      :actionType==="heal"?"Лечишь союзника. 1 короткая реплика."
-      :"Щитуешься. 1 короткая реплика.";
-    const message=persona
-      ?await llmChat(persona.getSystemPrompt(nick),actionHint,fallbacks[actionType],chat.slice(-2))
-      :fallbacks[actionType];
+      ?`Атакуешь ${weakest?en(weakest):"врага"} (${g[weakest??'e1']?.hp??0} здоровья). 1 короткая реплика как живой игрок.`
+      :actionType==="heal"?"Лечишь союзника. 1 короткая реплика как живой игрок."
+      :"Ставишь защиту. 1 короткая реплика как живой игрок.";
+    const raw=persona?await llmChat(persona.getSystemPrompt(nick),actionHint,null,chat.slice(-2)):null;
+    const message=(raw&&raw!==SKIP)?raw:"";
     return{message,actions:[{type:actionType,target:actionTarget}]};
   };
   const alexChatAPI=async(msg,g)=>{
@@ -1520,7 +1521,7 @@ export default function App(){
     ].filter(Boolean).join(" ");
     const base=allyPersona.getSystemPrompt(allyNick);
     const sys=`${base}\n\nТЕКУЩЕЕ СОСТОЯНИЕ БОЯ: ${statusLines}\n\nОтвечай только как участник этого боя. Если партнёр пишет что-то не связанное с игрой — коротко ответь и верни разговор к бою.`;
-    return llmChat(sys,msg,allyPersona.FALLBACKS.trade_declined??"Понял.",chat.slice(-4));
+    return llmChat(sys,msg,"ок",chat.slice(-4));
   };
   const sendChat=async()=>{
     const msg=input.trim();if(!msg||loading)return;
