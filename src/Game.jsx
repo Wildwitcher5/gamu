@@ -463,12 +463,12 @@ function CardPreview({card,gs,onApply,onTarget,onClose,isP,odLeft,alreadySel,en}
           {canAct&&!alreadySel&&needsTgt&&(
             <>
               {gs.e1.hp>0&&<button onClick={()=>onTarget("e1")} style={{background:"#6a1818",color:"#fff",
-                border:`1px solid ${def.c}88`,borderRadius:7,padding:"10px",fontSize:12,fontWeight:700,
-                cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                border:`1px solid ${def.c}88`,borderRadius:7,padding:"14px 18px",fontSize:13,fontWeight:700,
+                cursor:"pointer",fontFamily:"Georgia,serif",minHeight:48}}>
                 ⚔ Удар по {en("e1")} ({gs.e1.hp} здоровья)</button>}
               {gs.e2.hp>0&&<button onClick={()=>onTarget("e2")} style={{background:"#4a1050",color:"#fff",
-                border:`1px solid ${def.c}88`,borderRadius:7,padding:"10px",fontSize:12,fontWeight:700,
-                cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                border:`1px solid ${def.c}88`,borderRadius:7,padding:"14px 18px",fontSize:13,fontWeight:700,
+                cursor:"pointer",fontFamily:"Georgia,serif",minHeight:48}}>
                 ⚔ Удар по {en("e2")} ({gs.e2.hp} здоровья)</button>}
             </>
           )}
@@ -843,6 +843,7 @@ export default function App(){
   const [playerAvatar,setPlayerAvatar]=useState(()=>localStorage.getItem("player_avatar")||null);
   const [setupName,setSetupName]=useState("");
   const [setupAvatarImg,setSetupAvatarImg]=useState(null);
+  const [showComboRef,setShowComboRef]=useState(false);
 
   const [showSurvey1,setShowSurvey1]=useState(true);
   const [showSurvey2,setShowSurvey2]=useState(false);
@@ -1265,6 +1266,7 @@ export default function App(){
   const skipTurn=async()=>{
     if(phase!=="player"||loading)return;
     setPhase("busy");setLoad(true);setPlayed([]);setJC(null);setJR(false);
+    if(isMobile){setActiveTab("battle");activeTabRef.current="battle";}
     const nb=Math.min(odBank+1,1);
     addLog(`Ход ${turn}: Пропуск — +1 ОД в банк`);
     let g={you:{...gs.you},alex:{...gs.alex},e1:{...gs.e1},e2:{...gs.e2}};
@@ -1317,6 +1319,7 @@ export default function App(){
   const endTurn=async()=>{
     if(phase!=="player"||loading||(played.length===0&&!jointCard))return;
     setPhase("busy");setLoad(true);
+    if(isMobile){setActiveTab("battle");activeTabRef.current="battle";}
     let capturedDeck=[...sharedDeck];let capturedCycle=fatigueCycle;
     let localE1h=[...e1Hand];let localE2h=[...e2Hand];
     let g={you:{...gs.you},alex:{...gs.alex},e1:{...gs.e1},e2:{...gs.e2}};
@@ -1381,7 +1384,7 @@ export default function App(){
     newHand=[...newHand,...stolenCards,...pereborDrawn];
     setHand(newHand);setTimeout(()=>setHand(h=>h.map(c=>({...c,flipIn:false}))),700);
     setPlayed([]);
-    if(jointCard&&jointTarget&&jointReady){const d=22;if(g[jointTarget].hp>0){g[jointTarget]={...g[jointTarget],hp:cl(g[jointTarget].hp-d,0,999)};doEvent(jointTarget,d,`💥 Совместный удар → ${en(jointTarget)} −${d} HP`,'#ff6060');enqueue(async()=>{showComboBanner("💥 СОВМЕСТНЫЙ УДАР",JOINT_IMG);await dly(400);});logs.push(`💥 СОВМЕСТНЫЙ УДАР → ${en(jointTarget)}: −${d}!`);}}
+    if(jointCard&&jointTarget&&jointReady){const d=22;if(g[jointTarget].hp>0){g[jointTarget]={...g[jointTarget],hp:cl(g[jointTarget].hp-d,0,999)};doEvent(jointTarget,d,`💥 Совместный удар → ${en(jointTarget)} −${d} HP`,'#ff6060');enqueue(async()=>{showComboBanner("💥 СОВМЕСТНЫЙ УДАР",JOINT_IMG);await dly(400);});logs.push(`💥 СОВМЕСТНЫЙ УДАР → ${en(jointTarget)}: −${d}!`);setCoopScore(s=>s+2);}}
     else if(jointCard&&!jointReady)logs.push("💥 Союзник не готов — удар сорвался");
     setJC(null);setJR(false);setJointTarget(null);
     const allyLow=g.alex.hp<MHP.alex*0.35||g.you.hp<MHP.you*0.35;
@@ -1795,7 +1798,7 @@ export default function App(){
               {!thinking.alex&&loading&&<div style={{marginLeft:"auto",width:7,height:7,borderRadius:"50%",background:"#4caf82",animation:"pulse 1s infinite"}}/>}
             </div>
             <div style={{flex:1,overflowY:"auto",marginBottom:10,minHeight:120,maxHeight:isMobile?undefined:280}}>
-              {chat.map((m,i)=><Bubble key={i} m={m} nick={allyNick}/>)}
+              {chat.slice(-50).map((m,i)=><Bubble key={i} m={m} nick={allyNick}/>)}
               {typing&&(
                 <div style={{marginBottom:10,display:"flex",gap:7,alignItems:"flex-start",animation:"fadeIn 0.25s"}}>
                   <div style={{width:26,height:26,borderRadius:"50%",background:"#4caf82",
@@ -1824,7 +1827,7 @@ export default function App(){
                 style={{flex:1,padding:"8px 10px",background:"rgba(200,160,80,0.06)",
                   border:"1px solid rgba(200,160,80,0.2)",borderRadius:6,
                   fontSize:12,color:"#c8b080",outline:"none",fontFamily:"Georgia,serif"}}/>
-              <button onClick={sendChat} disabled={loading||!input.trim()} style={{
+              <button onClick={sendChat} disabled={loading||!input.trim()} aria-label="Отправить" style={{
                 background:!loading&&input.trim()?"linear-gradient(135deg,#7a4008,#b86018)":"rgba(255,255,255,0.04)",
                 color:!loading&&input.trim()?"#fff":"#2a1808",
                 border:"none",borderRadius:6,padding:"8px 14px",cursor:"pointer",fontSize:14}}>→</button>
@@ -1855,9 +1858,27 @@ export default function App(){
         <div data-tutorial="hand" style={{display:isMobile&&activeTab!=="cards"?"none":undefined,background:"rgba(0,0,0,0.45)",border:"1px solid rgba(200,160,80,0.12)",
           borderRadius:10,padding:"10px 14px",marginBottom:10}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-            <div style={{fontSize:9,letterSpacing:2,color:"#4a3010",fontFamily:"Georgia,serif"}}>РУКА</div>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <div style={{fontSize:9,letterSpacing:2,color:"#4a3010",fontFamily:"Georgia,serif"}}>РУКА</div>
+              <button onClick={()=>setShowComboRef(v=>!v)}
+                style={{background:"rgba(200,160,80,0.06)",border:"1px solid rgba(200,160,80,0.18)",
+                borderRadius:4,padding:"2px 7px",fontSize:9,color:"#8a7050",cursor:"pointer",fontFamily:"Georgia,serif"}}>
+                {showComboRef?"▲ комбо":"📖 комбо"}</button>
+            </div>
             <div style={{fontSize:10,color:"#5a4020",fontFamily:"Georgia,serif"}}>В руке: {hand.length} / 5</div>
           </div>
+          {showComboRef&&(
+            <div style={{background:"rgba(0,0,0,0.35)",border:"1px solid rgba(200,160,80,0.15)",
+              borderRadius:8,padding:"8px 10px",marginBottom:8,display:"flex",flexWrap:"wrap",gap:4}}>
+              {COMBOS.map(c=>(
+                <div key={c.name} style={{fontSize:9,color:"#9a8050",fontFamily:"Georgia,serif",
+                  background:"rgba(200,154,60,0.07)",border:"1px solid rgba(200,154,60,0.18)",
+                  borderRadius:5,padding:"3px 8px",whiteSpace:"nowrap"}}>
+                  {c.needs.map(t=>CARDS[t]?.e).join("")} → {c.name}
+                </div>
+              ))}
+            </div>
+          )}
           {played.length>0&&(
             <div style={{marginBottom:8}}>
               <div style={{display:"flex",gap:6,flexWrap:"wrap",padding:"5px 8px",
