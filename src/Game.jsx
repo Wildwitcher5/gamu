@@ -850,8 +850,8 @@ export default function App(){
   const [survey2Data,setSurvey2Data]=useState(null);
   const [blockOrder]=useState(()=>{
     const saved=localStorage.getItem("block_order");
-    if(saved)return saved;
-    const order=Math.random()<0.5?"out_first":"in_first";
+    if(saved==="approve_first"||saved==="disapprove_first")return saved;
+    const order=Math.random()<0.5?"approve_first":"disapprove_first";
     localStorage.setItem("block_order",order);
     return order;
   });
@@ -1831,6 +1831,25 @@ export default function App(){
           </div>
         </div>
 
+        {/* ── Played cards summary — visible on battle tab on mobile ─────────── */}
+        {isMobile&&activeTab==="battle"&&played.length>0&&(
+          <div style={{background:"rgba(200,154,60,0.06)",borderRadius:8,border:"1px solid rgba(200,154,60,0.2)",
+            padding:"6px 10px",marginBottom:8,display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
+            <span style={{fontSize:9,color:"#8a6020",fontFamily:"Georgia,serif"}}>В ход:</span>
+            {played.map((p)=>{
+              const def=CARDS[p.card.type];
+              return <div key={p.card.uid} style={{fontSize:9,background:"rgba(200,154,60,0.15)",
+                border:`1px solid ${def.c}55`,borderRadius:5,padding:"3px 8px",
+                color:def.c,fontFamily:"Georgia,serif"}}>
+                {def.e} {def.n}{p.target?` →${en(p.target)}`:""}
+              </div>;
+            })}
+            {combo&&<div style={{fontSize:9,background:"rgba(224,154,60,0.2)",
+              border:"1px solid rgba(224,154,60,0.5)",borderRadius:5,padding:"3px 8px",
+              color:"#e09a3c",fontFamily:"Georgia,serif",fontWeight:700}}>✨ {combo.name}</div>}
+          </div>
+        )}
+
         {/* ── Hand area ──────────────────────────────────────────────────────── */}
         <div data-tutorial="hand" style={{display:isMobile&&activeTab!=="cards"?"none":undefined,background:"rgba(0,0,0,0.45)",border:"1px solid rgba(200,160,80,0.12)",
           borderRadius:10,padding:"10px 14px",marginBottom:10}}>
@@ -1879,7 +1898,7 @@ export default function App(){
         </div>
 
         {/* ── Bottom bar ─────────────────────────────────────────────────────── */}
-        <div style={{display:isMobile&&activeTab!=="cards"?"none":"flex",alignItems:"center",gap:12,padding:"10px 14px",
+        <div style={{display:isMobile&&activeTab==="chat"?"none":"flex",alignItems:"center",gap:12,padding:"10px 14px",
           background:"rgba(0,0,0,0.65)",border:"1px solid rgba(200,160,80,0.15)",
           borderRadius:10,flexWrap:"wrap"}}>
 

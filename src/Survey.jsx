@@ -484,24 +484,9 @@ export function ExportScreen({ onClose }) {
     10 gameQ
     11 final
 */
-export default function Survey({ type, blockOrder = "out_first", onComplete }) {
+export default function Survey({ type, blockOrder = "approve_first", onComplete }) {
   const isPre = type === "pre";
   const TOTAL = isPre ? 13 : 12;
-  const outFirst = blockOrder !== "in_first";
-
-  const IDX = isPre
-    ? { welcome:0, dir:1, ingId:2,
-        traitsOut:outFirst?3:4, traitsIn:outFirst?4:3,
-        affectOut:outFirst?5:6, affectIn:outFirst?6:5,
-        distOut:outFirst?7:8,   distIn:outFirst?8:7,
-        coopOut:outFirst?9:10,  coopIn:outFirst?10:9,
-        demo:11, final:12 }
-    : { welcome:0, ingId:1,
-        traitsOut:outFirst?2:3, traitsIn:outFirst?3:2,
-        affectOut:outFirst?4:5, affectIn:outFirst?5:4,
-        distOut:outFirst?6:7,   distIn:outFirst?7:6,
-        coopOut:outFirst?8:9,   coopIn:outFirst?9:8,
-        gameQ:10, final:11 };
 
   /* Cookie check — pre only */
   const [cookieScreen, setCookieScreen] = useState(() => isPre && getCookie("pol_study_done") ? "check" : null);
@@ -550,6 +535,32 @@ export default function Survey({ type, blockOrder = "out_first", onComplete }) {
 
   const ingroup = ans.direction !== null ? computeIngroup(ans.direction) : null;
   const gt = ingroup ? getGroupText(ingroup) : { inTxt: "…", outTxt: "…", inDir: "…", outDir: "…" };
+
+  /*
+   * outFirst: do outgroup questions appear BEFORE ingroup questions in each block?
+   * blockOrder is "approve_first" or "disapprove_first" — absolute political group ordering.
+   * "approve_first" → questions about approvers come first for EVERYONE.
+   *   - for approve-participants: ingroup (approve) first → outFirst = false
+   *   - for disapprove-participants: outgroup (approve) first → outFirst = true
+   * Before dir is answered, defaults to false (irrelevant, blocks not yet shown).
+   */
+  const outFirst = ingroup
+    ? (blockOrder === "approve_first" ? ingroup === "disapprove" : ingroup === "approve")
+    : false;
+
+  const IDX = isPre
+    ? { welcome:0, dir:1, ingId:2,
+        traitsOut:outFirst?3:4, traitsIn:outFirst?4:3,
+        affectOut:outFirst?5:6, affectIn:outFirst?6:5,
+        distOut:outFirst?7:8,   distIn:outFirst?8:7,
+        coopOut:outFirst?9:10,  coopIn:outFirst?10:9,
+        demo:11, final:12 }
+    : { welcome:0, ingId:1,
+        traitsOut:outFirst?2:3, traitsIn:outFirst?3:2,
+        affectOut:outFirst?4:5, affectIn:outFirst?5:4,
+        distOut:outFirst?6:7,   distIn:outFirst?7:6,
+        coopOut:outFirst?8:9,   coopIn:outFirst?9:8,
+        gameQ:10, final:11 };
 
   /* ── Validation ─────────────────────────────────────────────── */
   function isComplete() {
