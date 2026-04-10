@@ -103,12 +103,6 @@ const RESHUFFLE_TEMPLATE = [
 ];
 const fpCycle=c=>c===1?0:c===2?3:c===3?6:10;
 const ALEX_ACTION_MAP={attack:["attack","double","rage","bleed"],shield:["shield","counter","trap"],heal:["healAlex","revive","energy"]};
-const AVATARS=[
-  {id:"av1",color:"#4c7fe0",letter:"A"},{id:"av2",color:"#e05252",letter:"B"},
-  {id:"av3",color:"#4caf82",letter:"C"},{id:"av4",color:"#e09a3c",letter:"D"},
-  {id:"av5",color:"#8b5cf6",letter:"E"},{id:"av6",color:"#06b6d4",letter:"F"},
-  {id:"av7",color:"#f0c040",letter:"G"},{id:"av8",color:"#e08050",letter:"H"},
-];
 /* ── Experimental conditions & avatar system ─────────────────────────── */
 /*
  * AVATAR_MANIFEST is a virtual module generated at build time by vite.config.js.

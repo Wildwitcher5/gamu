@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 
 /* ═══════════════════════ STORAGE KEYS ═══════════════════════════════════ */
-const LS_KEY = "polarization_study_responses";
 const SESSION_KEY = "pol_current_session";
 
 /* ═══════════════════════ SCALE CONSTANTS ═══════════════════════════════ */
@@ -25,13 +24,6 @@ const SCALE_COOP = [
   "Не\nуверен(а)",
   "Скорее\nготов(а)",
   "Полностью\nготов(а)",
-];
-const SCALE_THREAT = [
-  "Почти или\nсовсем нет",
-  "Немного",
-  "Умеренно",
-  "Значительно",
-  "Очень\nсильно",
 ];
 const SCALE_GAME_ENJOY = [
   "Очень не\nпонравилась",
@@ -81,55 +73,6 @@ const INCOME_OPTS = [
   "Можем позволить себе практически всё",
 ];
 
-/* CSV column order for export */
-const CSV_HEADERS = [
-  // Meta
-  "session_id","status","ts_s1_start","ts_s1_end","ts_game_end","ts_s2_end","condition",
-  // Demographics
-  "dem_gender","dem_age","dem_education","dem_income",
-  // Avatars
-  "avatar_self","nick_self","avatar_partner","avatar_opponent_1","avatar_opponent_2",
-  // S1 raw
-  "s1_direction","s1_ingroup",
-  ...Array.from({length:6},(_,i)=>`s1_traits_out_${i+1}`),
-  ...Array.from({length:6},(_,i)=>`s1_traits_in_${i+1}`),
-  "s1_affect_out","s1_affect_in",
-  ...Array.from({length:4},(_,i)=>`s1_dist_out_${i+1}`),
-  ...Array.from({length:4},(_,i)=>`s1_dist_in_${i+1}`),
-  ...Array.from({length:3},(_,i)=>`s1_coop_out_${i+1}`),
-  ...Array.from({length:3},(_,i)=>`s1_coop_in_${i+1}`),
-  ...Array.from({length:4},(_,i)=>`s1_threat_out_${i+1}`),
-  ...Array.from({length:4},(_,i)=>`s1_threat_in_${i+1}`),
-  // S1 indices
-  "s1_traits_in_mean","s1_traits_out_mean","s1_traits_diff",
-  "s1_affect_diff",
-  "s1_dist_in_mean","s1_dist_out_mean","s1_dist_diff",
-  "s1_coop_in_mean","s1_coop_out_mean","s1_coop_diff",
-  "s1_threat_in_mean","s1_threat_out_mean","s1_threat_diff",
-  "s1_polar_index",
-  // S2 raw
-  "s2_direction","s2_ingroup",
-  ...Array.from({length:6},(_,i)=>`s2_traits_out_${i+1}`),
-  ...Array.from({length:6},(_,i)=>`s2_traits_in_${i+1}`),
-  "s2_affect_out","s2_affect_in",
-  ...Array.from({length:4},(_,i)=>`s2_dist_out_${i+1}`),
-  ...Array.from({length:4},(_,i)=>`s2_dist_in_${i+1}`),
-  ...Array.from({length:3},(_,i)=>`s2_coop_out_${i+1}`),
-  ...Array.from({length:3},(_,i)=>`s2_coop_in_${i+1}`),
-  ...Array.from({length:4},(_,i)=>`s2_threat_out_${i+1}`),
-  ...Array.from({length:4},(_,i)=>`s2_threat_in_${i+1}`),
-  // S2 indices
-  "s2_traits_in_mean","s2_traits_out_mean","s2_traits_diff",
-  "s2_affect_diff",
-  "s2_dist_in_mean","s2_dist_out_mean","s2_dist_diff",
-  "s2_coop_in_mean","s2_coop_out_mean","s2_coop_diff",
-  "s2_threat_in_mean","s2_threat_out_mean","s2_threat_diff",
-  "s2_polar_index",
-  // Deltas
-  "delta_polar","delta_traits","delta_affect","delta_dist","delta_coop","delta_threat",
-  // Game
-  "game_enjoyment","game_engagement","game_frequency","game_guess",
-];
 
 /* ════════════════════════ STORAGE UTILS ════════════════════════════════ */
 function generateUUID() {
@@ -137,10 +80,6 @@ function generateUUID() {
     const r = (Math.random() * 16) | 0;
     return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
   });
-}
-
-function getResponses() {
-  try { return JSON.parse(localStorage.getItem(LS_KEY) || "[]"); } catch { return []; }
 }
 
 /* upsertResponse: localStorage write removed — data now goes to the server.
@@ -379,82 +318,6 @@ function BipolarMatrix({ items, values, onChange, uid }) {
           <div className="bipolar-label bipolar-label-right">{rightLabel}</div>
         </div>
       ))}
-    </div>
-  );
-}
-
-/* ════════════════════════ EXPORT SCREEN ════════════════════════════════ */
-export function ExportScreen({ onClose }) {
-  const responses = getResponses();
-  const total = responses.length;
-  const complete = responses.filter(r => r.status === "complete").length;
-  const incomplete = total - complete;
-
-  function downloadCSV() {
-    function escapeCSV(v) {
-      if (v == null) return "";
-      const s = String(v);
-      if (s.includes(",") || s.includes('"') || s.includes("\n")) {
-        return '"' + s.replace(/"/g, '""') + '"';
-      }
-      return s;
-    }
-    const rows = responses.map(r => CSV_HEADERS.map(h => escapeCSV(r[h])).join(","));
-    const csv = "\uFEFF" + [CSV_HEADERS.join(","), ...rows].join("\r\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = "responses.csv"; a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  function downloadJSON() {
-    const blob = new Blob([JSON.stringify(responses, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = "responses.json"; a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  function clearData() {
-    if (window.confirm("Вы уверены? Все данные будут удалены без возможности восстановления")) {
-      localStorage.removeItem(LS_KEY);
-      localStorage.removeItem(SESSION_KEY);
-      onClose();
-    }
-  }
-
-  const btnBase = {
-    border: "none", borderRadius: 8, padding: "11px 28px",
-    fontSize: 13, fontWeight: 700, cursor: "pointer",
-    fontFamily: "Georgia, serif", letterSpacing: 0.4,
-  };
-
-  return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(6,4,2,0.97)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000, backdropFilter: "blur(8px)" }}>
-      <div style={{ background: "#faf8f4", borderRadius: 12, padding: "44px 48px", maxWidth: 500, width: "90%", fontFamily: "Georgia, serif", boxShadow: "0 24px 80px rgba(0,0,0,0.7)" }}>
-        <div style={{ fontSize: 20, fontWeight: 700, color: "#1a1410", marginBottom: 28, borderBottom: "2px solid #e8e4de", paddingBottom: 14 }}>
-          Экспорт данных
-        </div>
-        <div style={{ fontSize: 14, color: "#3a3228", marginBottom: 28, lineHeight: 1.7 }}>
-          Сохранено прохождений: <b>{total}</b><br />
-          Завершённых: <b>{complete}</b> &nbsp;|&nbsp; Незавершённых: <b>{incomplete}</b>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <button style={{ ...btnBase, background: "linear-gradient(135deg,#1a3a5c,#2d6496)", color: "#fff" }} onClick={downloadCSV}>
-            Скачать CSV
-          </button>
-          <button style={{ ...btnBase, background: "linear-gradient(135deg,#1a3a5c,#2d6496)", color: "#fff" }} onClick={downloadJSON}>
-            Скачать JSON
-          </button>
-          <button style={{ ...btnBase, background: "linear-gradient(135deg,#5c1a1a,#962d2d)", color: "#fff" }} onClick={clearData}>
-            Очистить данные
-          </button>
-          <button style={{ ...btnBase, background: "#e0dcd6", color: "#555" }} onClick={onClose}>
-            Закрыть
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
