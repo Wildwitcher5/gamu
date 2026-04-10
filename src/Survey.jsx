@@ -487,7 +487,12 @@ export function ExportScreen({ onClose }) {
 export default function Survey({ type, blockOrder = "approve_first", onComplete }) {
   const isPre = type === "pre";
   const TOTAL = isPre ? 13 : 12;
-  const isMobile = window.innerWidth < 768;
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   /* Cookie check — pre only */
   const [cookieScreen, setCookieScreen] = useState(() => isPre && getCookie("pol_study_done") ? "check" : null);

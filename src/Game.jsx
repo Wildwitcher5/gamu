@@ -614,8 +614,8 @@ function EffectBadge({type,stacks,color,bg,border}){
       animation:stacks===1?"pulse 1s infinite":undefined}}
       onMouseEnter={()=>setTip(true)} onMouseLeave={()=>setTip(false)}>
       <img src={type==="poison"?POISON_ICON:BLEED_ICON} alt=""
-        style={{width:36,height:36,objectFit:"contain"}}/>
-      <span style={{fontSize:14,color,fontFamily:"Georgia,serif",fontWeight:700}}>{stacks}</span>
+        style={{width:22,height:22,objectFit:"contain"}}/>
+      <span style={{fontSize:12,color,fontFamily:"Georgia,serif",fontWeight:700}}>{stacks}</span>
       {tip&&(
         <div className="effect-tooltip">{tipText}</div>
       )}
@@ -895,7 +895,8 @@ export default function App(){
           game_outcome:winner??"unknown",
           game_turns:turn,
           chat_messages_sent:chatMsgCountRef.current,
-          block_order:localStorage.getItem("block_order")??"out_first",
+          block_order:localStorage.getItem("block_order")??blockOrder,
+          cooperation_score:cooperationScore,
         };
         saveCurrentSession(updated);
         upsertResponse(updated);
@@ -1598,7 +1599,7 @@ export default function App(){
         onClose={()=>setPreview(null)}
         en={en}/>}
 
-      <div style={{position:"relative",zIndex:1,maxWidth:1100,margin:"0 auto",padding:isMobile?"8px 8px 64px":"10px 14px 6px"}}>
+      <div style={{position:"relative",zIndex:1,maxWidth:1100,margin:"0 auto",padding:isMobile?"8px 8px 72px":"10px 14px 6px"}}>
 
         {/* ── Header ─────────────────────────────────────────────────────────── */}
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
@@ -2033,7 +2034,7 @@ export default function App(){
       {tradeOffer&&phase!=="mulligan"&&(
         <div style={{position:"fixed",inset:0,zIndex:75,display:"flex",alignItems:"center",
           justifyContent:"center",background:"rgba(0,0,0,0.7)",backdropFilter:"blur(6px)",
-          animation:"fadeIn 0.3s"}} onClick={()=>{setTradeOffer(null);setTradeSel(null);alexSpeak("trade_declined",gs);}}>
+          animation:"fadeIn 0.3s"}} onClick={()=>{setTradeOffer(null);setTradeSel(null);}}>
           <div style={{background:"linear-gradient(135deg,#0a1a12,#0e2018)",
             border:"1px solid rgba(76,175,130,0.4)",borderRadius:16,padding:"28px 36px",
             maxWidth:740,width:"90%",animation:"scaleIn 0.3s cubic-bezier(.15,1.2,.3,1)",
