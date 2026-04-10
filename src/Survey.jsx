@@ -487,6 +487,7 @@ export function ExportScreen({ onClose }) {
 export default function Survey({ type, blockOrder = "approve_first", onComplete }) {
   const isPre = type === "pre";
   const TOTAL = isPre ? 13 : 12;
+  const isMobile = window.innerWidth < 768;
 
   /* Cookie check — pre only */
   const [cookieScreen, setCookieScreen] = useState(() => isPre && getCookie("pol_study_done") ? "check" : null);
@@ -1078,11 +1079,11 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete 
         {renderScreen()}
 
         {/* Navigation */}
-        <div style={{ marginTop: 34, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
+        <div style={{ marginTop: 34, display: "flex", flexDirection: "column", alignItems: isMobile ? "stretch" : "flex-end", gap: 10 }}>
           {submitError && (
             <div style={{ fontSize: 13, color: "#c0392b", background: "#fdf0ee",
               border: "1px solid #e8c0bc", borderRadius: 8, padding: "10px 16px",
-              maxWidth: 460, lineHeight: 1.5, fontFamily: "Georgia, serif" }}>
+              lineHeight: 1.5, fontFamily: "Georgia, serif" }}>
               ⚠ {submitError}
             </div>
           )}
@@ -1092,7 +1093,8 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete 
             style={{
               background: complete && !submitting ? "linear-gradient(135deg,#1a3a5c,#2d6496)" : "#e0dcd6",
               color: complete && !submitting ? "#fff" : "#b0a898",
-              border: "none", borderRadius: 8, padding: "13px 46px",
+              border: "none", borderRadius: 8,
+              padding: isMobile ? "15px 24px" : "13px 46px",
               fontSize: 14, fontWeight: 700, letterSpacing: 0.5,
               cursor: complete && !submitting ? "pointer" : "default",
               fontFamily: "Georgia, serif",

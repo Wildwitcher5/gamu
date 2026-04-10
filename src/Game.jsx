@@ -1813,8 +1813,8 @@ export default function App(){
                 ["📖 Комбо?","Какие комбо нам доступны?"]].map(([label,msg])=>(
                 <button key={label} onClick={()=>{if(!loading){addChat("you",msg);setInput("");setLoad(true);alexChatAPI(msg,gs).then(r=>{if(r!==SKIP)addChat("alex",r);setLoad(false);});}}}
                   disabled={loading} style={{background:"rgba(200,160,80,0.06)",border:"1px solid rgba(200,160,80,0.2)",
-                  borderRadius:6,padding:"5px 9px",color:loading?"#2a1808":"#8a7050",fontSize:10,
-                  cursor:loading?"default":"pointer",fontFamily:"Georgia,serif"}}>{label}</button>
+                  borderRadius:6,padding:isMobile?"8px 12px":"5px 9px",color:loading?"#2a1808":"#8a7050",
+                  fontSize:isMobile?13:10,cursor:loading?"default":"pointer",fontFamily:"Georgia,serif"}}>{label}</button>
               ))}
             </div>
             <div style={{display:"flex",gap:6}}>
