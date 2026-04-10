@@ -1002,8 +1002,8 @@ export default function App(){
     enqueue(async()=>{flashEntity(key,isHeal);floatNumber(key,value,isHeal);showBanner(text,color);await dly(600);});
   };
 
-  /* ── DeepSeek helper ─────────────────────────────────────────────────── */
-  const deepseekChat=async(systemPrompt,userMessage,fallback,history=[])=>{
+  /* ── LLM helper (OpenRouter / Claude Haiku) ─────────────────────────── */
+  const llmChat=async(systemPrompt,userMessage,fallback,history=[])=>{
     try{
       const messages=[
         {role:"system",content:systemPrompt},
@@ -1013,21 +1013,19 @@ export default function App(){
         })),
         {role:"user",content:userMessage},
       ];
-      const r=await fetch("/api/deepseek",{
+      const r=await fetch("/api/chat",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
-          model:"deepseek-chat",
+          model:"anthropic/claude-haiku-4-5",
           max_tokens:80,
-          temperature:1.3,
-          frequency_penalty:0.8,
-          presence_penalty:0.6,
+          temperature:0.95,
           messages,
         }),
       });
       const d=await r.json();
       return d.choices?.[0]?.message?.content??fallback;
-    }catch(err){console.error("deepseekChat error:",err);return fallback;}
+    }catch(err){console.error("llmChat error:",err);return fallback;}
   };
 
   const usedOd=played.reduce((s,p)=>s+CARDS[p.card.type].od,0)
@@ -1060,7 +1058,7 @@ export default function App(){
     else{setPlayed(pl=>[...pl,{card,target:tgt}]);setPreview(null);}
   };
 
-  /* ── alexSpeak — situational chat via DeepSeek (falls back to FALLBACKS) */
+  /* ── alexSpeak — situational chat via LLM (falls back to FALLBACKS) ── */
   const alexSpeak=async(eventType,g)=>{
     const now=Date.now();
     if(eventType==="ally_down"){if(allyDownSentRef.current)return;allyDownSentRef.current=true;}
@@ -1094,19 +1092,19 @@ export default function App(){
       reviveCard&&typeof allyHp==="number"&&allyHp<=0 ? `Ты мёртв, но у партнёра есть ВОЗРОЖДЕНИЕ — намекни что ждёшь воскрешения.` : ""
     );
     const hints={
-      trade_offer:`Предложи партнёру обменяться картой. Скажи что у тебя есть что-то лишнее — коротко, в своей манере.`,
-      trade_accepted:`Партнёр принял твой обмен. Отреагируй коротко и позитивно.`,
-      trade_declined:`Партнёр отказался от обмена. Скажи ок, без обид.`,
-      low_hp:`У кого-то критически мало HP (твой: ${allyHp}, партнёра: ${youHp}). ${tacticalNote||"Скажи что ситуация напряжённая."} Коротко.`,
-      enemy_low_hp:`Враги почти побеждены. Скажи что-то ободряющее — очень коротко.`,
-      took_heavy_hit:`Партнёр только что получил сильный удар (у него ${youHp}HP). ${tacticalNote||"Скажи что-то сочувственное."} Без пафоса, коротко.`,
-      victory:`Победили врагов. Скажи что-то по результату — коротко, в своей манере.`,
-      defeat:`Проиграли. Скажи что-то утешительное — коротко.`,
-      joint_combo:`Только что нанесли совместный удар. Скажи что-то коротко.`,
-      ally_down:`Ты погиб в бою (HP=0). Напиши партнёру что пал и что нужна карта Возрождения — коротко.`,
-      revived:`Партнёр тебя воскресил картой Возрождения! Поблагодари коротко, в своей манере.`,
+      trade_offer:`Предложи партнёру обменяться картой. Короткая реплика (не больше одного предложения), каждый раз другими словами — не начинай с одинаковых фраз. Вариации: намекни что карта лишняя, или скажи прямо что хочешь обменяться, или спроси нужна ли ему конкретная карта.`,
+      trade_accepted:`Партнёр принял обмен. Одна короткая реакция — разные варианты: подтверди сделку, скажи «збс» / «давай» / «ок» / «отлично» / «договорились».`,
+      trade_declined:`Партнёр отказался от обмена. Одна фраза без обид — варианты: «ладно», «ок», «понял», «ну и норм».`,
+      low_hp:`HP критически низкое (твоё: ${allyHp}, партнёра: ${youHp}). ${tacticalNote||""} Одна напряжённая реплика — почувствуй давление боя. Не повторяй прошлые фразы.`,
+      enemy_low_hp:`Враги почти добиты (живые: ${ctx.enemies}). Одна короткая реплика с азартом или облегчением — «добиваем» / «ещё чуть» / «почти взяли» и т.п.`,
+      took_heavy_hit:`Партнёр получил сильный удар и у него ${youHp}HP. ${tacticalNote||""} Коротко — сочувствие, тревога или призыв держаться. Каждый раз другие слова.`,
+      victory:`Победили. Одна фраза в твоём стиле — радость, облегчение или сдержанная гордость.`,
+      defeat:`Проиграли. Одна фраза — без нытья, но с ощущением.`,
+      joint_combo:`Только что нанесли совместный удар. Одна реакция — восторг, удовлетворение или просто «да».`,
+      ally_down:`Ты упал в бою (HP=0). Напиши партнёру что пал и нужна карта Возрождения — коротко, своими словами.`,
+      revived:`Партнёр тебя воскресил! Короткая благодарность — «спасибо», «жив», «в строю», «выручил» и т.п. Каждый раз по-новому.`,
     };
-    const text=await deepseekChat(
+    const text=await llmChat(
       persona.getSystemPrompt(nick),
       hints[eventType]??"Скажи что-нибудь уместное по ситуации в бою — очень коротко.",
       fallback,
@@ -1132,7 +1130,7 @@ export default function App(){
       ?`Партнёр предлагает совместный удар по ${en(t)} (${gs[t].hp}HP). У тебя есть карта совместного удара. Скажи кратко что готов — 1 фраза.`
       :`Партнёр предлагает совместный удар по ${en(t)} (${gs[t].hp}HP). У тебя нет карты совместного удара. Скажи кратко что не можешь — 1 фраза.`;
     const fallback=canJoin?"Готов, бьём!":"Нет нужной карты сейчас.";
-    const txt=await deepseekChat(sys,prompt,fallback,chat.slice(-4));
+    const txt=await llmChat(sys,prompt,fallback,chat.slice(-4));
     addChat("alex",txt);
     setJR(canJoin||(txt.toLowerCase().includes("готов")||txt.toLowerCase().includes("давай")||txt.toLowerCase().includes("бьём")));
     setLoad(false);
@@ -1439,7 +1437,7 @@ export default function App(){
         if(!allyPersona)return;
         const ctx={allyHp:g.alex.hp,youHp:g.you.hp,enemies:aliveAfter.map(k=>`${en(k)} ${g[k].hp}HP`).join(", ")};
         const hint=`У тебя есть карта Совместного удара. Предложи партнёру ударить вместе по ${en(weakestE)} (${g[weakestE].hp} здоровья). Коротко, в своей манере.`;
-        const msg=await deepseekChat(allyPersona.getSystemPrompt(allyNick),hint,"слушай, давай совм. удар по нему?",chat.slice(-2));
+        const msg=await llmChat(allyPersona.getSystemPrompt(allyNick),hint,"слушай, давай совм. удар по нему?",chat.slice(-2));
         addChat("alex",msg);
       },1200);
     }}
@@ -1490,7 +1488,7 @@ export default function App(){
     if(Math.random()<0.6){
       return{message:"",actions:[{type:actionType,target:actionTarget}]};
     }
-    // Generate short situational message via DeepSeek
+    // Generate short situational message via LLM
     const persona=allyPersona;
     const nick=allyNick;
     const ctx={allyHp:g.alex.hp,youHp:g.you.hp,enemies:alive.map(k=>`${en(k)} ${g[k].hp}HP`).join(", ")||"повержены"};
@@ -1500,7 +1498,7 @@ export default function App(){
       :actionType==="heal"?"Лечишь союзника. 1 короткая реплика."
       :"Щитуешься. 1 короткая реплика.";
     const message=persona
-      ?await deepseekChat(persona.getSystemPrompt(nick),actionHint,fallbacks[actionType],chat.slice(-2))
+      ?await llmChat(persona.getSystemPrompt(nick),actionHint,fallbacks[actionType],chat.slice(-2))
       :fallbacks[actionType];
     return{message,actions:[{type:actionType,target:actionTarget}]};
   };
@@ -1522,7 +1520,7 @@ export default function App(){
     ].filter(Boolean).join(" ");
     const base=allyPersona.getSystemPrompt(allyNick);
     const sys=`${base}\n\nТЕКУЩЕЕ СОСТОЯНИЕ БОЯ: ${statusLines}\n\nОтвечай только как участник этого боя. Если партнёр пишет что-то не связанное с игрой — коротко ответь и верни разговор к бою.`;
-    return deepseekChat(sys,msg,allyPersona.FALLBACKS.trade_declined??"Понял.",chat.slice(-4));
+    return llmChat(sys,msg,allyPersona.FALLBACKS.trade_declined??"Понял.",chat.slice(-4));
   };
   const sendChat=async()=>{
     const msg=input.trim();if(!msg||loading)return;

@@ -407,15 +407,12 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete 
 
   /*
    * outFirst: do outgroup questions appear BEFORE ingroup questions in each block?
-   * blockOrder is "approve_first" or "disapprove_first" — absolute political group ordering.
-   * "approve_first" → questions about approvers come first for EVERYONE.
-   *   - for approve-participants: ingroup (approve) first → outFirst = false
-   *   - for disapprove-participants: outgroup (approve) first → outFirst = true
-   * Before dir is answered, defaults to false (irrelevant, blocks not yet shown).
+   * Determined purely by blockOrder (randomised 50/50 at session start) — independent
+   * of the participant's own political position.
+   * "disapprove_first" → outgroup block shown first for every participant.
+   * "approve_first"    → ingroup block shown first for every participant.
    */
-  const outFirst = ingroup
-    ? (blockOrder === "approve_first" ? ingroup === "disapprove" : ingroup === "approve")
-    : false;
+  const outFirst = blockOrder === "disapprove_first";
 
   const IDX = isPre
     ? { welcome:0, dir:1, ingId:2,
@@ -711,13 +708,14 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete 
       return (
         <>
           <BodyText style={{ marginBottom: 16 }}>
-            Перед вами несколько утверждений об отношении к {gt.inTxt}.
+            Перед вами несколько утверждений об отношении к людям, которые
+            считают, что дела в России идут в {gt.inDir} направлении.
           </BodyText>
           <SurveyMatrix
             items={[
               `Я горжусь тем, что принадлежу к числу ${gt.inTxt}`,
               `Мне важно быть частью ${gt.inTxt}`,
-              `Я ощущаю психологическую связь с ${gt.inTxt}`,
+              `Я ощущаю психологическую связь с людьми, которые считают, что дела в России идут в ${gt.inDir} направлении`,
             ]}
             scale={SCALE_AGREE}
             values={ans.ingroupId}
@@ -734,7 +732,7 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete 
         <>
           <BodyText style={{ marginBottom: 16 }}>
             Ниже приведён список характеристик. Как вам кажется, насколько
-            каждая из них свойственна {gt.outTxt}?
+            каждая из них характерна для {gt.outTxt}?
           </BodyText>
           <BipolarMatrix
             items={TRAITS_ITEMS}
@@ -752,7 +750,7 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete 
         <>
           <BodyText style={{ marginBottom: 16 }}>
             Ниже приведён список характеристик. Как вам кажется, насколько
-            каждая из них свойственна {gt.inTxt}?
+            каждая из них характерна для {gt.inTxt}?
           </BodyText>
           <BipolarMatrix
             items={TRAITS_ITEMS}
@@ -769,7 +767,8 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete 
       return (
         <>
           <BodyText style={{ marginBottom: 20 }}>
-            Как бы вы оценили своё отношение к {gt.outTxt}?
+            Как бы вы оценили своё отношение к людям, которые считают,
+            что дела в России идут в {gt.outDir} направлении?
           </BodyText>
           <SemanticDiff
             leftLabel="Отношение очень холодное, отрицательное"
@@ -787,7 +786,8 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete 
       return (
         <>
           <BodyText style={{ marginBottom: 20 }}>
-            Как бы вы оценили своё отношение к {gt.inTxt}?
+            Как бы вы оценили своё отношение к людям, которые считают,
+            что дела в России идут в {gt.inDir} направлении?
           </BodyText>
           <SemanticDiff
             leftLabel="Отношение очень холодное, отрицательное"
@@ -806,8 +806,8 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete 
         <>
           <BodyText style={{ marginBottom: 16 }}>
             Насколько вам было бы комфортно обсуждать личные вопросы и
-            ситуацию в стране с человеком, который считает, что {gt.outTxt},
-            если этот человек является...
+            ситуацию в стране с человеком, который считает, что дела
+            в России идут в {gt.outDir} направлении, если этот человек является...
           </BodyText>
           <SurveyMatrix
             items={["Членом вашей семьи", "Вашим другом", "Вашим коллегой", "Вашим соседом"]}
@@ -826,8 +826,8 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete 
         <>
           <BodyText style={{ marginBottom: 16 }}>
             Насколько вам было бы комфортно обсуждать личные вопросы и
-            ситуацию в стране с человеком, который считает, что {gt.inTxt},
-            если этот человек является...
+            ситуацию в стране с человеком, который считает, что дела
+            в России идут в {gt.inDir} направлении, если этот человек является...
           </BodyText>
           <SurveyMatrix
             items={["Членом вашей семьи", "Вашим другом", "Вашим коллегой", "Вашим соседом"]}
@@ -845,7 +845,8 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete 
       return (
         <>
           <BodyText style={{ marginBottom: 16 }}>
-            Насколько вы готовы совместно с {gt.outTxt}...
+            Насколько вы готовы совместно с людьми, которые считают,
+            что дела в России идут в {gt.outDir} направлении...
           </BodyText>
           <SurveyMatrix
             items={[
@@ -867,7 +868,8 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete 
       return (
         <>
           <BodyText style={{ marginBottom: 16 }}>
-            Насколько вы готовы совместно с {gt.inTxt}...
+            Насколько вы готовы совместно с людьми, которые считают,
+            что дела в России идут в {gt.inDir} направлении...
           </BodyText>
           <SurveyMatrix
             items={[
