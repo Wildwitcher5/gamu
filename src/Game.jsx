@@ -1849,7 +1849,7 @@ export default function App(){
         )}
 
         {/* ── Hand area ──────────────────────────────────────────────────────── */}
-        <div data-tutorial="hand" style={{display:isMobile&&activeTab!=="cards"?"none":"flex",background:"rgba(0,0,0,0.45)",border:"1px solid rgba(200,160,80,0.12)",
+        <div data-tutorial="hand" style={{display:isMobile&&activeTab!=="cards"?"none":"block",background:"rgba(0,0,0,0.45)",border:"1px solid rgba(200,160,80,0.12)",
           borderRadius:10,padding:"10px 14px",marginBottom:10}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
             <div style={{display:"flex",alignItems:"center",gap:8}}>
