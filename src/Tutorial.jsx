@@ -9,8 +9,8 @@ function getTutorialSteps(nick, e1, e2) {
   return [
   {
     target: null,
-    title: "Добро пожаловать в дружину",
-    text: `Ты и твой напарник ${n} сражаетесь против ${en1} и ${en2}. У каждого 100 здоровья. Победа — уничтожить обоих врагов. Поражение — только если погибнете оба.`,
+    title: "Добро пожаловать!",
+    text: `Ты и твой напарник ${n} сражаетесь против ${en1} и ${en2}. У каждого 100 здоровья.\nЦель — уничтожить обоих врагов. Поражение наступает, только если погибнете оба.`,
   },
   {
     target: '[data-tutorial="enemies"]',
@@ -368,7 +368,7 @@ export default function Tutorial({ onEnd, allyNick, e1Nick, e2Nick, setActiveTab
               boxShadow: current.isLast ? "0 0 20px rgba(200,120,20,0.5)" : "none",
             }}
           >
-            {current.isLast ? "Начать бой" : "Понятно →"}
+            {current.isLast ? "Начать игру →" : "Понятно →"}
           </button>
         </div>
       </div>

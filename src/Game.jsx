@@ -68,8 +68,8 @@ const CARDS = {
   double:  {e:"⚔️⚔️",n:"РАССЕЧЕНИЕ",   d:"−8 здоровья двум разным врагам",                 c:"#ff7070", t:"enemy", od:2},
   shield:  {e:"🛡️", n:"ЩИТ",          d:"+10 здоровья себе",                               c:"#4c7fe0", t:null,    od:1},
   healAlex:{e:"💉",  n:"ИСЦЕЛИТЬ",     d:"+12 здоровья Союзнику",                           c:"#4caf82", t:null,    od:1},
-  poison:  {e:"☠️",  n:"ЯД",           d:"−5 HP в ход · 3 хода подряд = 15 урона",          c:"#7bc67e", t:"enemy", od:1},
-  bleed:   {e:"🩸",  n:"КРОВОТЕЧЕНИЕ", d:"−3 HP в ход · 4 хода (каждое применение +4 хода)", c:"#cc3344", t:"enemy", od:1},
+  poison:  {e:"☠️",  n:"ЯД",           d:"−5 здоровья в ход · 3 хода подряд = 15 урона",          c:"#7bc67e", t:"enemy", od:1},
+  bleed:   {e:"🩸",  n:"КРОВОТЕЧЕНИЕ", d:"−3 здоровья в ход · 4 хода (каждое применение +4 хода)", c:"#cc3344", t:"enemy", od:1},
   rage:    {e:"🔥",  n:"ЯРОСТЬ",       d:"−18 здоровья врагу, −4 себе",                    c:"#e06030", t:"enemy", od:2},
   joint:   {e:"💥",  n:"СОВМ. УДАР",  d:"22 урона (нужно согласие Союзника)",              c:"#e09a3c", t:"enemy", od:1},
   spy:     {e:"🔍",  n:"ШПИОНАЖ",     d:"Взять случайную карту из руки врага",             c:"#8b5cf6", t:"enemy", od:1},
@@ -602,8 +602,8 @@ function EffectBadge({type,stacks,color,bg,border}){
   const [tip,setTip]=useState(false);
   const totalDmg=type==="poison"?stacks*5:stacks*3;
   const tipText=type==="poison"
-    ?`Яд: ещё ${stacks} ход(а) по −5 HP\nОсталось −${totalDmg} HP суммарно`
-    :`Кровотечение: ещё ${stacks} ход(а) по −3 HP\nОсталось −${totalDmg} HP суммарно`;
+    ?`Яд: ещё ${stacks} ход(а) по −5 здоровья\nОсталось −${totalDmg} здоровья суммарно`
+    :`Кровотечение: ещё ${stacks} ход(а) по −3 здоровья\nОсталось −${totalDmg} здоровья суммарно`;
   return(
     <div style={{position:"relative",display:"inline-flex",alignItems:"center",gap:3,
       background:bg,border:`1px solid ${border}`,
@@ -2021,7 +2021,7 @@ export default function App(){
             cursor:canEnd&&!animating?"pointer":animating?"not-allowed":"default",fontFamily:"Georgia,serif",letterSpacing:1,
             boxShadow:canEnd&&!animating?"0 0 28px rgba(210,130,20,0.55),0 2px 8px rgba(0,0,0,0.5)":"none",
             transition:"all 0.2s"}}>
-            {loading?"⏳ ДЕРЖИМ…":animating?"⚡ АНИМАЦИЯ…":"В БОЙ ▶"}
+            {loading?"⏳ Ждём…":animating?"⚡ Ход…":"Конец хода ▶"}
           </button>
         </div>
 
@@ -2208,7 +2208,7 @@ export default function App(){
             }} style={{background:"linear-gradient(135deg,#7a4008,#c87820)",color:"#fff",
               border:"none",borderRadius:8,padding:"14px 44px",fontSize:13,fontWeight:700,letterSpacing:2,
               cursor:"pointer",fontFamily:"Georgia,serif",boxShadow:"0 0 30px rgba(200,120,20,0.4)"}}>
-              В БОЙ ▶
+              Начать ▶
             </button>
           </div>
         </div>)}
@@ -2233,7 +2233,7 @@ export default function App(){
               </div>
             </div>
             <div style={{fontSize:11,color:"#8a7050",marginBottom:6,fontFamily:"Georgia,serif"}}>
-              Выбери карту из руки для сброса — или откажись от новой (штрафа нет):
+              Выбери карту из руки для сброса — или не бери новую:
             </div>
             <div style={{display:"flex",gap:10,justifyContent:"center",marginBottom:20,flexWrap:"wrap"}}>
               {hand.map(card=>{
@@ -2258,7 +2258,7 @@ export default function App(){
             }} style={{background:"rgba(255,255,255,0.06)",color:"#6a5030",
               border:"1px solid rgba(200,160,80,0.2)",borderRadius:6,padding:"8px 20px",
               fontSize:10,cursor:"pointer",fontFamily:"Georgia,serif"}}>
-              Отвергнуть новую (−1 удар)
+              Не брать новую карту
             </button>
           </div>
         </div>)}
@@ -2399,7 +2399,7 @@ export default function App(){
             <div style={{fontSize:26,fontWeight:900,letterSpacing:4,fontFamily:"Georgia,serif",
               color:winner==="player"?"#4caf82":"#e05252",marginBottom:12,
               textShadow:`0 0 30px ${winner==="player"?"rgba(76,175,130,0.6)":"rgba(224,82,82,0.6)"}`}}>
-              {winner==="player"?"СЛАВА ДРУЖИНЕ":"ДРУЖИНА ПАЛА"}</div>
+              {winner==="player"?"ПОБЕДА!":"ПОРАЖЕНИЕ"}</div>
             <div style={{fontSize:12,color:"#4a3010",marginBottom:8,fontFamily:"Georgia,serif"}}>Ход {turn}</div>
             <div style={{display:"flex",gap:24,justifyContent:"center",marginBottom:18}}>
               <div style={{fontSize:12,color:"#8a7050",fontFamily:"Georgia,serif"}}>
@@ -2407,7 +2407,7 @@ export default function App(){
               </div>
             </div>
             <div style={{fontSize:13,color:"#8a7050",marginBottom:34,lineHeight:1.8,fontFamily:"Georgia,serif"}}>
-              {winner==="player"?"Дружина не подвела. Добрая служба.":"Расставляй ловушки да держи контрудар наготове."}</div>
+              {winner==="player"?"Отлично сыграно — команда победила!":"Используй комбо и следи за здоровьем союзника. Удачи!"}</div>
             <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap"}}>
               {!survey2Data&&!showSurvey2&&(
                 <button onClick={()=>setShowSurvey2(true)}
