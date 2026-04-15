@@ -47,14 +47,13 @@ const SCALE_GAME_FREQ = [
   "Каждый день или\nпочти каждый день",
 ];
 
-/* Bipolar trait pairs: [leftPole (1), rightPole (7)] */
 const TRAITS_ITEMS = [
-  ["Неумные", "Умные"],
-  ["Злые", "Добрые"],
-  ["Нечестные", "Честные"],
-  ["Безэмоциональные", "Эмоциональные"],
-  ["Эгоистичные", "Бескорыстные"],
-  ["Ограниченные", "Открытые к новым идеям"],
+  "Умные",
+  "Отзывчивые",
+  "Честные",
+  "Тщательно анализируют информацию",
+  "Склонные к помощи",
+  "Открытые к новым идеям",
 ];
 
 const EDUCATION_OPTS = [
@@ -345,7 +344,6 @@ function BipolarMatrix({ items, values, onChange, uid }) {
 */
 export default function Survey({ type, blockOrder = "approve_first", onComplete }) {
   const isPre = type === "pre";
-  const TOTAL = isPre ? 13 : 12;
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 768);
@@ -401,6 +399,10 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete 
   const ingroup = ans.direction !== null ? computeIngroup(ans.direction) : null;
   const gt = ingroup ? getGroupText(ingroup) : { inTxt: "…", outTxt: "…", inDir: "…", outDir: "…" };
 
+  /* Skip the ingroup-identification screen for undecided participants (direction === 3) */
+  const skipIngId = ans.direction === 3;
+  const TOTAL = isPre ? (skipIngId ? 12 : 13) : (skipIngId ? 11 : 12);
+
   /*
    * outFirst: do outgroup questions appear BEFORE ingroup questions in each block?
    * Determined purely by blockOrder (randomised 50/50 at session start) — independent
@@ -414,21 +416,35 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete 
    * Block ordering: ALL questions for one direction come BEFORE all questions for the other.
    * outFirst=true  → steps 3-6 are outgroup (неправильно), steps 7-10 are ingroup (правильно)
    * outFirst=false → steps 3-6 are ingroup  (правильно),   steps 7-10 are outgroup (неправильно)
-   * Step 3 (ingId) is always about the user's own group and is not affected by block order.
+   * When skipIngId=true the ingId slot is removed; all subsequent indices shift down by 1.
    */
   const IDX = isPre
-    ? { welcome:0, dir:1, ingId:2,
-        traitsOut:outFirst?3:7,  traitsIn:outFirst?7:3,
-        affectOut:outFirst?4:8,  affectIn:outFirst?8:4,
-        distOut:  outFirst?5:9,  distIn:  outFirst?9:5,
-        coopOut:  outFirst?6:10, coopIn:  outFirst?10:6,
-        demo:11, final:12 }
-    : { welcome:0, ingId:1,
-        traitsOut:outFirst?2:6,  traitsIn:outFirst?6:2,
-        affectOut:outFirst?3:7,  affectIn:outFirst?7:3,
-        distOut:  outFirst?4:8,  distIn:  outFirst?8:4,
-        coopOut:  outFirst?5:9,  coopIn:  outFirst?9:5,
-        gameQ:10, final:11 };
+    ? (skipIngId
+      ? { welcome:0, dir:1,
+          traitsOut:outFirst?2:6,  traitsIn:outFirst?6:2,
+          affectOut:outFirst?3:7,  affectIn:outFirst?7:3,
+          distOut:  outFirst?4:8,  distIn:  outFirst?8:4,
+          coopOut:  outFirst?5:9,  coopIn:  outFirst?9:5,
+          demo:10, final:11 }
+      : { welcome:0, dir:1, ingId:2,
+          traitsOut:outFirst?3:7,  traitsIn:outFirst?7:3,
+          affectOut:outFirst?4:8,  affectIn:outFirst?8:4,
+          distOut:  outFirst?5:9,  distIn:  outFirst?9:5,
+          coopOut:  outFirst?6:10, coopIn:  outFirst?10:6,
+          demo:11, final:12 })
+    : (skipIngId
+      ? { welcome:0,
+          traitsOut:outFirst?1:5,  traitsIn:outFirst?5:1,
+          affectOut:outFirst?2:6,  affectIn:outFirst?6:2,
+          distOut:  outFirst?3:7,  distIn:  outFirst?7:3,
+          coopOut:  outFirst?4:8,  coopIn:  outFirst?8:4,
+          gameQ:9, final:10 }
+      : { welcome:0, ingId:1,
+          traitsOut:outFirst?2:6,  traitsIn:outFirst?6:2,
+          affectOut:outFirst?3:7,  affectIn:outFirst?7:3,
+          distOut:  outFirst?4:8,  distIn:  outFirst?8:4,
+          coopOut:  outFirst?5:9,  coopIn:  outFirst?9:5,
+          gameQ:10, final:11 });
 
   /* ── Validation ─────────────────────────────────────────────── */
   function isComplete() {
@@ -733,11 +749,13 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete 
       return (
         <>
           <BodyText style={{ marginBottom: 16 }}>
-            Ниже приведён список характеристик. Как вам кажется, насколько
-            каждая из них характерна для {gt.outTxt}?
+            Ниже приведён список личностных качеств. Как вам кажется, какими
+            особенностями обладают люди, считающие, что дела в России идут в{" "}
+            {gt.outDir} направлении?
           </BodyText>
-          <BipolarMatrix
+          <SurveyMatrix
             items={TRAITS_ITEMS}
+            scale={SCALE_AGREE}
             values={ans.traitsOut}
             onChange={(ri, v) => setArr("traitsOut", ri, v)}
             uid={`${type}_trout`}
@@ -751,11 +769,13 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete 
       return (
         <>
           <BodyText style={{ marginBottom: 16 }}>
-            Ниже приведён список характеристик. Как вам кажется, насколько
-            каждая из них характерна для {gt.inTxt}?
+            Ниже приведён список личностных качеств. Как вам кажется, какими
+            особенностями обладают люди, считающие, что дела в России идут в{" "}
+            {gt.inDir} направлении?
           </BodyText>
-          <BipolarMatrix
+          <SurveyMatrix
             items={TRAITS_ITEMS}
+            scale={SCALE_AGREE}
             values={ans.traitsIn}
             onChange={(ri, v) => setArr("traitsIn", ri, v)}
             uid={`${type}_trin`}
@@ -854,7 +874,7 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete 
             items={[
               "Обсуждать общественно значимые проблемы",
               "Искать совместные решения общественных проблем",
-              "Участвовать в совместных гражданских инициативах (например, субботник или организация местного мероприятия)",
+              "Участвовать в совместных гражданских инициативах (например, субботнике или организации местного мероприятия)",
             ]}
             scale={SCALE_COOP}
             values={ans.coopOut}
@@ -877,7 +897,7 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete 
             items={[
               "Обсуждать общественно значимые проблемы",
               "Искать совместные решения общественных проблем",
-              "Участвовать в совместных гражданских инициативах (например, субботник или организация местного мероприятия)",
+              "Участвовать в совместных гражданских инициативах (например, субботнике или организации местного мероприятия)",
             ]}
             scale={SCALE_COOP}
             values={ans.coopIn}
