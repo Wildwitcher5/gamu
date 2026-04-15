@@ -68,8 +68,8 @@ const CARDS = {
   double:  {e:"⚔️⚔️",n:"РАССЕЧЕНИЕ",   d:"−8 здоровья двум разным врагам",                 c:"#ff7070", t:"enemy", od:2},
   shield:  {e:"🛡️", n:"ЩИТ",          d:"+10 здоровья себе",                               c:"#4c7fe0", t:null,    od:1},
   healAlex:{e:"💉",  n:"ИСЦЕЛИТЬ",     d:"+12 здоровья Союзнику",                           c:"#4caf82", t:null,    od:1},
-  poison:  {e:"☠️",  n:"ЯД",           d:"Яд: 3 тика по −5 здоровья",                      c:"#7bc67e", t:"enemy", od:1},
-  bleed:   {e:"🩸",  n:"КРОВОТЕЧЕНИЕ", d:"Кровотечение: 4 тика по −3 здоровья (стакается)", c:"#cc3344", t:"enemy", od:1},
+  poison:  {e:"☠️",  n:"ЯД",           d:"−5 HP в ход · 3 хода подряд = 15 урона",          c:"#7bc67e", t:"enemy", od:1},
+  bleed:   {e:"🩸",  n:"КРОВОТЕЧЕНИЕ", d:"−3 HP в ход · 4 хода (каждое применение +4 хода)", c:"#cc3344", t:"enemy", od:1},
   rage:    {e:"🔥",  n:"ЯРОСТЬ",       d:"−18 здоровья врагу, −4 себе",                    c:"#e06030", t:"enemy", od:2},
   joint:   {e:"💥",  n:"СОВМ. УДАР",  d:"22 урона (нужно согласие Союзника)",              c:"#e09a3c", t:"enemy", od:1},
   spy:     {e:"🔍",  n:"ШПИОНАЖ",     d:"Взять случайную карту из руки врага",             c:"#8b5cf6", t:"enemy", od:1},
@@ -602,8 +602,8 @@ function EffectBadge({type,stacks,color,bg,border}){
   const [tip,setTip]=useState(false);
   const totalDmg=type==="poison"?stacks*5:stacks*3;
   const tipText=type==="poison"
-    ?`Яд: осталось ${stacks} тиков\nЕщё −${totalDmg} здоровья суммарно`
-    :`Кровотечение: осталось ${stacks} тиков\nЕщё −${totalDmg} здоровья суммарно`;
+    ?`Яд: ещё ${stacks} ход(а) по −5 HP\nОсталось −${totalDmg} HP суммарно`
+    :`Кровотечение: ещё ${stacks} ход(а) по −3 HP\nОсталось −${totalDmg} HP суммарно`;
   return(
     <div style={{position:"relative",display:"inline-flex",alignItems:"center",gap:3,
       background:bg,border:`1px solid ${border}`,
@@ -1614,15 +1614,15 @@ export default function App(){
                 animation:phase==="busy"?"pulse 1s infinite":undefined}}>
                 {phase==="mulligan"?"🃏 РАЗДАЧА":phase==="player"?"▶ ТВОЙ ХОД":phase==="busy"?"⏳ ХОД ВРАГОВ...":phase==="overflow"?"🃏 РУКА ПОЛНА":"■ КОНЕЦ"}
               </div>
-              <div style={{fontSize:8,color:"#3a2808",fontFamily:"Georgia,serif"}}>
+              <div style={{fontSize:9,color:"#4a3510",fontFamily:"Georgia,serif"}}>
                 {phase==="player"?"Выбирай карты и завершай ход":phase==="busy"?"Союзник и враги делают ходы":phase==="mulligan"?"Можно заменить до 2 карт":""}
               </div>
             </div>
             <button onClick={()=>{setShowTutorial(true);localStorage.removeItem("tutorialDone");}}
-              style={{background:"rgba(200,160,80,0.06)",color:"#6a5030",
-              border:"1px solid rgba(200,160,80,0.18)",borderRadius:5,padding:"4px 10px",
-              fontSize:10,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:0.5}}>
-              ? обучение
+              style={{background:"rgba(200,160,80,0.08)",color:"#8a7040",
+              border:"1px solid rgba(200,160,80,0.28)",borderRadius:5,padding:"5px 12px",
+              fontSize:11,cursor:"pointer",fontFamily:"Georgia,serif",letterSpacing:0.5}}>
+              📖 Обучение
             </button>
           </div>
         </div>
@@ -2173,7 +2173,7 @@ export default function App(){
             <div style={{fontSize:22,fontWeight:900,letterSpacing:4,fontFamily:"Georgia,serif",
               color:"#c8901c",marginBottom:6}}>СТАРТОВАЯ РУКА</div>
             <div style={{fontSize:12,color:"#6a5030",marginBottom:22,fontFamily:"Georgia,serif"}}>
-              Выбери до 2 карт для замены — или оставь руку как есть
+              Нажми на карту, чтобы отметить её для замены (до 2 карт) — или сразу жми «В бой»
             </div>
             <div style={{display:"flex",gap:14,justifyContent:"center",marginBottom:18,flexWrap:"wrap"}}>
               {hand.map(card=>{
@@ -2233,7 +2233,7 @@ export default function App(){
               </div>
             </div>
             <div style={{fontSize:11,color:"#8a7050",marginBottom:6,fontFamily:"Georgia,serif"}}>
-              Сбрось одну карту — иначе −2 ОД на следующем ходу:
+              Выбери карту из руки для сброса — или откажись от новой (штрафа нет):
             </div>
             <div style={{display:"flex",gap:10,justifyContent:"center",marginBottom:20,flexWrap:"wrap"}}>
               {hand.map(card=>{
@@ -2325,8 +2325,8 @@ export default function App(){
             borderRadius:12,padding:"40px",maxWidth:480,width:"90%",textAlign:"center",
             color:"#e8d5a0",fontFamily:"Georgia,serif",animation:"scaleIn 0.3s cubic-bezier(.15,1.2,.3,1)",
             boxShadow:"0 0 80px rgba(200,140,20,0.3)"}}>
-            <div style={{fontSize:22,fontWeight:900,letterSpacing:3,color:"#c8901c",marginBottom:6}}>НАЗОВИ СЕБЯ, ВОИН</div>
-            <div style={{fontSize:12,color:"#6a5030",marginBottom:24}}>Имя твоё да образ — пред дружиной</div>
+            <div style={{fontSize:22,fontWeight:900,letterSpacing:3,color:"#c8901c",marginBottom:6}}>КАК ТЕБЯ ЗОВУТ?</div>
+            <div style={{fontSize:12,color:"#6a5030",marginBottom:24}}>Введи имя для игры · Фото необязательно</div>
             {/* Hidden file input */}
             <input ref={setupFileRef} type="file" accept="image/*" style={{display:"none"}}
               onChange={e=>{
