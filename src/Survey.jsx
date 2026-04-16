@@ -493,6 +493,7 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete 
       ...Object.fromEntries(ans.distIn.map(   (v,i) => [`s1_dist_in_${i+1}`,    v])),
       ...Object.fromEntries(ans.coopOut.map(  (v,i) => [`s1_coop_out_${i+1}`,   v])),
       ...Object.fromEntries(ans.coopIn.map(   (v,i) => [`s1_coop_in_${i+1}`,    v])),
+      ...Object.fromEntries(ans.ingroupId.map((v,i) => [`s1_ingroup_id_${i+1}`, v])),
       ...computeIndices("s1",
           ans.traitsOut, ans.traitsIn, ans.affectOut, ans.affectIn,
           ans.distOut,   ans.distIn,   ans.coopOut,   ans.coopIn),

@@ -1794,7 +1794,7 @@ export default function App(){
               </div>}
               {!thinking.alex&&loading&&<div style={{marginLeft:"auto",width:7,height:7,borderRadius:"50%",background:"#4caf82",animation:"pulse 1s infinite"}}/>}
             </div>
-            <div style={{flex:1,overflowY:"auto",marginBottom:10,minHeight:120,maxHeight:isMobile?undefined:280}}>
+            <div style={{flex:1,overflowY:"auto",marginBottom:10,minHeight:120,maxHeight:isMobile?"calc(100vh - 260px)":280}}>
               {chat.slice(-50).map((m,i)=><Bubble key={i} m={m} nick={allyNick}/>)}
               {typing&&(
                 <div style={{marginBottom:10,display:"flex",gap:7,alignItems:"flex-start",animation:"fadeIn 0.25s"}}>
@@ -2253,7 +2253,7 @@ export default function App(){
               })}
             </div>
             <button onClick={()=>{
-              setDrawCooldown(1);
+              setDrawCooldown(0);
               setPendingDrawCard(null);setPhase("player");
             }} style={{background:"rgba(255,255,255,0.06)",color:"#6a5030",
               border:"1px solid rgba(200,160,80,0.2)",borderRadius:6,padding:"8px 20px",
