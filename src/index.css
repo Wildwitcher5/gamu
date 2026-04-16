@@ -52,6 +52,11 @@ button:not(:disabled):hover {
   50%       { transform: scale(1.04); }
 }
 
+@keyframes crystalGlow {
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(60,160,255,0.7)); }
+  50%       { filter: drop-shadow(0 0 14px rgba(60,160,255,1)); }
+}
+
 @keyframes comboFlash {
   0%   { opacity: 0; transform: scale(0.2) rotate(-6deg); }
   25%  { opacity: 1; transform: scale(1.12) rotate(2deg); }

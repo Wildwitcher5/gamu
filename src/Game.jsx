@@ -230,10 +230,11 @@ function GameCard({card,selected,dimmed,notEnoughOd,jointPending,comboWith,onPre
   const def=CARDS[card.type];
   const isJP=jointPending;
   const [tipVisible,setTipVisible]=useState(false);
+  const [hovered,setHovered]=useState(false);
   const tipTimer=useRef(null);
   const cardCombos=COMBOS.filter(c=>c.needs.includes(card.type));
-  const handleMouseEnter=()=>{tipTimer.current=setTimeout(()=>setTipVisible(true),400);};
-  const handleMouseLeave=()=>{clearTimeout(tipTimer.current);setTipVisible(false);};
+  const handleMouseEnter=()=>{tipTimer.current=setTimeout(()=>setTipVisible(true),400);setHovered(true);};
+  const handleMouseLeave=()=>{clearTimeout(tipTimer.current);setTipVisible(false);setHovered(false);};
   const W=small?100:148;
   const H=W*1.5;
   // Measured pixel-exact from frame PNG (400x600 source)
@@ -271,9 +272,9 @@ function GameCard({card,selected,dimmed,notEnoughOd,jointPending,comboWith,onPre
       <div onClick={()=>{if(!dimmed||selected||isJP)onPreview(card);}}
         style={{position:"absolute",inset:0,cursor:dimmed&&!selected&&!isJP?"default":"pointer",
           opacity:dimmed&&!selected&&!isJP?0.22:1,
-          transform:selected?"translateY(-14px) scale(1.07)":isJP?"translateY(-7px) scale(1.02)":"none",
+          transform:selected?"translateY(-14px) scale(1.07)":isJP?"translateY(-7px) scale(1.02)":hovered&&!dimmed?"translateY(-6px) scale(1.03)":"none",
           transition:"all 0.18s cubic-bezier(.4,0,.2,1)",
-          filter:glow?`drop-shadow(0 0 12px ${glow}aa)`:"none"}}>
+          filter:glow?`drop-shadow(0 0 12px ${glow}aa)`:hovered&&!dimmed?`drop-shadow(0 0 8px ${def.c}88)`:"none"}}>
 
         {comboWith&&<div style={{position:"absolute",top:-12,left:"50%",transform:"translateX(-50%)",
           fontSize:8,background:"#e09a3c",color:"#000",borderRadius:3,padding:"2px 6px",
@@ -324,7 +325,7 @@ function GameCard({card,selected,dimmed,notEnoughOd,jointPending,comboWith,onPre
 function Crystal({active,size=44}){
   return(
     <div style={{width:size,height:size,opacity:active?1:0.2,transition:"opacity 0.3s",
-      filter:active?"drop-shadow(0 0 10px rgba(60,160,255,0.9))":"none"}}>
+      animation:active?"crystalGlow 2.2s ease-in-out infinite":undefined}}>
       <img src={CR} alt="" style={{width:"100%",height:"100%",objectFit:"contain"}}/>
     </div>
   );
@@ -1914,7 +1915,7 @@ export default function App(){
                   color:"#e09a3c",fontFamily:"Georgia,serif",fontWeight:700}}>✨ КОМБО</div>}
               </div>
               {combo&&<div style={{fontSize:10,color:"#e09a3c",fontFamily:"Georgia,serif",
-                marginTop:4,textAlign:"center",animation:"pulse 1s infinite",letterSpacing:0.5}}>
+                marginTop:4,textAlign:"center",animation:"scaleIn 0.3s ease-out, pulse 1s 0.3s infinite",letterSpacing:0.5}}>
                 ✨ КОМБО: {combo.name} — будет применено при завершении хода
               </div>}
             </div>)}
@@ -2024,13 +2025,14 @@ export default function App(){
             ВЫЖДАТЬ<br/>+1 ОД
           </button>
           <button onClick={endTurn} disabled={!canEnd||animating} style={{
-            background:canEnd&&!animating?"linear-gradient(135deg,#7a3e00,#d4841a)":"rgba(255,255,255,0.04)",
+            background:canEnd&&!animating?(combo?"linear-gradient(135deg,#8a4e00,#e8a020)":"linear-gradient(135deg,#7a3e00,#d4841a)"):"rgba(255,255,255,0.04)",
             color:canEnd&&!animating?"#fff":"#2a1808",border:canEnd&&!animating?"1px solid rgba(220,140,40,0.5)":"none",
             borderRadius:8,padding:"12px 28px",fontSize:13,fontWeight:900,
             cursor:canEnd&&!animating?"pointer":animating?"not-allowed":"default",fontFamily:"Georgia,serif",letterSpacing:1,
-            boxShadow:canEnd&&!animating?"0 0 28px rgba(210,130,20,0.55),0 2px 8px rgba(0,0,0,0.5)":"none",
+            boxShadow:combo&&canEnd&&!animating?"0 0 44px rgba(224,154,60,0.9),0 2px 8px rgba(0,0,0,0.5)":canEnd&&!animating?"0 0 28px rgba(210,130,20,0.55),0 2px 8px rgba(0,0,0,0.5)":"none",
+            animation:combo&&canEnd&&!animating?"comboPulse 1.4s ease-in-out infinite":undefined,
             transition:"all 0.2s"}}>
-            {loading?"⏳ Ждём…":animating?"⚡ Ход…":"Конец хода ▶"}
+            {loading?"⏳ Ждём…":animating?"⚡ Ход…":combo?"✨ Конец хода ▶":"Конец хода ▶"}
           </button>
         </div>
 
