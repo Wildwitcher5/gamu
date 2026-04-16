@@ -1365,7 +1365,7 @@ export default function App(){
             const si=rnd(sHand.length);const st=sHand[si];const rest=sHand.filter((_,i)=>i!==si);
             if(target==="e1")localE1h=rest;else localE2h=rest;
             stolenCards.push({uid:nuid(),type:st,flipIn:true});
-            logs.push(`🔍 Шпионаж: украдена «${CARDS[st].n}» у ${en(target)}`);
+            logs.push(`🔍 Шпионаж: украдена ${CARDS[st]?.e??""} ${CARDS[st]?.n??"карта"} у ${en(target)}`);
           }else{logs.push(`🔍 Шпионаж: у ${en(target)} нет карт`);}
           break;}
         case"perebor":{
@@ -1624,7 +1624,7 @@ export default function App(){
                 {phase==="mulligan"?"🃏 РАЗДАЧА":phase==="player"?"▶ ТВОЙ ХОД":phase==="busy"?"⏳ ХОД ВРАГОВ...":phase==="overflow"?"🃏 РУКА ПОЛНА":"■ КОНЕЦ"}
               </div>
               <div style={{fontSize:9,color:"#4a3510",fontFamily:"Georgia,serif"}}>
-                {phase==="player"?"Выбирай карты и завершай ход":phase==="busy"?"Союзник и враги делают ходы":phase==="mulligan"?"Можно заменить до 2 карт":""}
+                {phase==="player"?"Выбирай карты и завершай ход":phase==="busy"?"Союзник и враги делают ходы":phase==="mulligan"?"Можно заменить до 2 карт":phase==="overflow"?"Выбери карту для сброса":""}
               </div>
             </div>
             <button onClick={()=>{setShowTutorial(true);localStorage.removeItem("tutorialDone");}}
@@ -1974,7 +1974,7 @@ export default function App(){
 
           {/* AP crystals */}
           <div data-tutorial="ap" style={{display:"flex",flexDirection:"column",gap:4}}
-            title="Очки действия (ОД). Каждая карта стоит 1-2 ОД. В начале хода: +2 ОД. Пропуск хода: +1 ОД сверху.">
+            title="Очки действия (ОД). Каждая карта стоит 1-2 ОД. В начале хода: +2 ОД. Пропуск хода: +1 ОД в запас.">
             <div style={{fontSize:9,letterSpacing:1,color:"#4a3010",fontFamily:"Georgia,serif"}}>ОЧКИ ДЕЙСТВИЯ</div>
             <div style={{display:"flex",gap:3,alignItems:"center"}}>
               {Array.from({length:od},(_,i)=><Crystal key={i} active={i<odLeft} size={28}/>)}
@@ -1999,7 +1999,7 @@ export default function App(){
               <div style={{fontFamily:"Georgia,serif",lineHeight:1.15}}>
                 <div style={{fontSize:8,color:fatigueCycle>1?"#a04040":"#4a3010",letterSpacing:1}}>ИЗНУРЕНИЕ</div>
                 <div style={{fontSize:10,fontWeight:700,color:fatigueCycle>1?"#e05252":"#3a2808"}}>
-                  {fatigueCycle>1?`⚠ −${fatigueCycle===2?3:fatigueCycle===3?6:10}HP/🃏`:"Цикл 1 — норм"}
+                  {fatigueCycle>1?`⚠ −${fatigueCycle===2?3:fatigueCycle===3?6:10}HP/🃏`:"Цикл 1 — без штрафов"}
                 </div>
               </div>
             </div>
@@ -2242,7 +2242,7 @@ export default function App(){
               </div>
             </div>
             <div style={{fontSize:11,color:"#8a7050",marginBottom:6,fontFamily:"Georgia,serif"}}>
-              Выбери карту из руки для сброса — или не бери новую:
+              Выбери карту для сброса или откажись от новой:
             </div>
             <div style={{display:"flex",gap:10,justifyContent:"center",marginBottom:20,flexWrap:"wrap"}}>
               {hand.map(card=>{
