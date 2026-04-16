@@ -44,7 +44,7 @@ const FATIGUE_ICON = "/assets/fatigue.png";
 const ART = {
   attack:   "/assets/cards/attack.jpeg",
   rage:     "/assets/cards/rage.jpeg",
-  shield:   "/assets/cards/shied.jpeg",
+  shield:   "/assets/cards/shield.jpeg",
   joint:    "/assets/Combo.jpeg",
   trap:     "/assets/cards/trap.jpeg",
   double:   "/assets/cards/double.jpeg",
