@@ -887,6 +887,7 @@ export default function App(){
   const [counterTrigger,setCounterTrigger]=useState(null);
   const lastAlexSpeakRef=useRef(0);
   const allyDownSentRef=useRef(false);
+  const greetingSentRef=useRef(false);
 
   useEffect(()=>{setChat([]);},[]);
   useEffect(()=>{chatEnd.current?.scrollIntoView({behavior:"smooth"});},[chat]);
@@ -946,6 +947,21 @@ export default function App(){
     prevPhaseRef.current=phase;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[phase]);
+  // Ally greeting at game start (first time mulligan → player)
+  useEffect(()=>{
+    if(phase==="player"&&turn===1&&!greetingSentRef.current&&allyPersona){
+      greetingSentRef.current=true;
+      const playerNick=localStorage.getItem("nick_self")||"";
+      const hint=playerNick
+        ?`Начало игры. Ты только что начал играть вместе с ${playerNick}. Поздоровайся и спроси как дела или скажи что-нибудь короткое — как живой игрок в онлайн-чате.`
+        :`Начало игры. Поздоровайся с напарником и скажи что-нибудь короткое для начала — как живой игрок в онлайн-чате.`;
+      setTimeout(async()=>{
+        const text=await llmChat(allyPersona.getSystemPrompt(allyNick),hint,null,[]);
+        if(text&&text!==SKIP)addChat("alex",text);
+      },900);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[phase,allyPersona]);
   // Auto-skip when player is dead but game continues (log only once)
   useEffect(()=>{
     if(phase==="player"&&gs.you.hp<=0&&!loading){
@@ -1032,7 +1048,7 @@ export default function App(){
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
           model:"anthropic/claude-haiku-4-5",
-          max_tokens:50,
+          max_tokens:80,
           temperature:0.95,
           messages,
         }),
@@ -1509,10 +1525,14 @@ export default function App(){
     const persona=allyPersona;
     const nick=allyNick;
     const ctx={allyHp:g.alex.hp,youHp:g.you.hp,enemies:alive.map(k=>`${en(k)} ${g[k].hp}HP`).join(", ")||"повержены"};
-    const actionHint=actionType==="attack"
-      ?`атакую ${weakest?en(weakest):"врага"}`
-      :actionType==="heal"?"лечу"
-      :"ставлю защиту";
+    const personalHints=["что за карты?","как ты там?","нормально идёт?","сложно?","устал?"];
+    const usePersonal=turn>2&&Math.random()<0.25;
+    const actionHint=usePersonal
+      ?personalHints[Math.floor(Math.random()*personalHints.length)]
+      :actionType==="attack"
+        ?`атакую ${weakest?en(weakest):"врага"}`
+        :actionType==="heal"?"лечу"
+        :"ставлю защиту";
     const raw=persona?await llmChat(persona.getSystemPrompt(nick),actionHint,null,chat.slice(-2)):null;
     const message=(raw&&raw!==SKIP)?raw:"";
     return{message,actions:[{type:actionType,target:actionTarget}]};
