@@ -143,8 +143,8 @@ function assignAvatars(condition, ingroup) {
     condition === "cond_2" ? outFolder :
     "neutral"; // cond_3
   const partner    = pickAvatar(partnerFolder);
-  const opponent1  = pickAvatar(oppFolder, [partner].filter(Boolean));
-  const opponent2  = pickAvatar(oppFolder, [partner, opponent1].filter(Boolean));
+  const opponent1  = Math.random() < 0.2 ? null : pickAvatar(oppFolder, [partner].filter(Boolean));
+  const opponent2  = Math.random() < 0.2 ? null : pickAvatar(oppFolder, [partner, opponent1].filter(Boolean));
   return {
     avatar_partner:    partner,
     avatar_opponent_1: opponent1,
@@ -1032,7 +1032,7 @@ export default function App(){
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
           model:"anthropic/claude-haiku-4-5",
-          max_tokens:80,
+          max_tokens:50,
           temperature:0.95,
           messages,
         }),
@@ -1510,9 +1510,9 @@ export default function App(){
     const nick=allyNick;
     const ctx={allyHp:g.alex.hp,youHp:g.you.hp,enemies:alive.map(k=>`${en(k)} ${g[k].hp}HP`).join(", ")||"повержены"};
     const actionHint=actionType==="attack"
-      ?`Атакуешь ${weakest?en(weakest):"врага"} (${g[weakest??'e1']?.hp??0} здоровья). 1 короткая реплика как живой игрок.`
-      :actionType==="heal"?"Лечишь союзника. 1 короткая реплика как живой игрок."
-      :"Ставишь защиту. 1 короткая реплика как живой игрок.";
+      ?`атакую ${weakest?en(weakest):"врага"}`
+      :actionType==="heal"?"лечу"
+      :"ставлю защиту";
     const raw=persona?await llmChat(persona.getSystemPrompt(nick),actionHint,null,chat.slice(-2)):null;
     const message=(raw&&raw!==SKIP)?raw:"";
     return{message,actions:[{type:actionType,target:actionTarget}]};
