@@ -52,12 +52,6 @@ button:not(:disabled):hover {
   50%       { transform: scale(1.04); }
 }
 
-@keyframes enemyCardIn {
-  0%   { opacity: 0; transform: translateY(-40px) scale(0.7) rotate(-8deg); }
-  60%  { transform: translateY(4px) scale(1.05) rotate(1deg); }
-  100% { opacity: 1; transform: none; }
-}
-
 @keyframes comboFlash {
   0%   { opacity: 0; transform: scale(0.2) rotate(-6deg); }
   25%  { opacity: 1; transform: scale(1.12) rotate(2deg); }

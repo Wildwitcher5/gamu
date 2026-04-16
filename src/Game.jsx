@@ -1262,8 +1262,8 @@ export default function App(){
     }
     // Poison + bleed ticks
     for(const k of["you","alex","e1","e2"]){
-      if(ng[k]?.poison>0&&ng[k].hp>0){ng[k]={...ng[k],hp:cl(ng[k].hp-5,0,ng[k].maxHp),poison:ng[k].poison-1};logs.push(`☠ Яд(${k==="you"?"ты":k==="alex"?"Союзник":en(k)}): −5HP`);hit(k,5);}
-      if(ng[k]?.bleed>0&&ng[k].hp>0){ng[k]={...ng[k],hp:cl(ng[k].hp-3,0,ng[k].maxHp),bleed:ng[k].bleed-1};logs.push(`🩸 Кровь(${k==="you"?"ты":k==="alex"?"Союзник":en(k)}): −3HP`);hit(k,3);}
+      if(ng[k]?.poison>0&&ng[k].hp>0){ng[k]={...ng[k],hp:cl(ng[k].hp-5,0,ng[k].maxHp),poison:ng[k].poison-1};logs.push(`☠ Яд (${k==="you"?"ты":k==="alex"?"Союзник":en(k)}): −5HP`);hit(k,5);}
+      if(ng[k]?.bleed>0&&ng[k].hp>0){ng[k]={...ng[k],hp:cl(ng[k].hp-3,0,ng[k].maxHp),bleed:ng[k].bleed-1};logs.push(`🩸 Кровь (${k==="you"?"ты":k==="alex"?"Союзник":en(k)}): −3HP`);hit(k,3);}
     }
     // jcounter fallback — not consumed by joint attack → plain 4 HP hit
     if(ng.you.jcounter){const jct=ng.you.jcounter;if(ng[jct]?.hp>0){ng[jct]={...ng[jct],hp:cl(ng[jct].hp-4,0,ng[jct].maxHp)};hits[jct]=(hits[jct]??0)+4;logs.push(`🔰 Контрудар → ${en(jct)}: −4HP (совм. удара не было)`);}ng.you={...ng.you,jcounter:null};}
@@ -1354,7 +1354,7 @@ export default function App(){
         case"poison":{if(g[target].hp>0){g[target]={...g[target],poison:3};showBanner(`☠ Яд → ${en(target)}`,'#c060ff');logs.push(`Ты ☠️→${en(target)}: яд`);}break;}
         case"bleed":{if(g[target].hp>0){g[target]={...g[target],bleed:Math.min((g[target].bleed??0)+4,8)};showBanner(`🩸 Кровотечение → ${en(target)}`,'#e04040');logs.push(`Ты 🩸→${en(target)}: кровотечение ×4`);}break;}
         case"rage":{const d=18;if(g[target]?.counter){g[target]={...g[target],counter:false};g.you={...g.you,hp:cl(g.you.hp-d,0,g.you.maxHp)};doEvent("you",d,`↩️ ${en(target)} Контр! −${d} HP тебе`,'#ff9040');logs.push(`↩️ ${en(target)} Контр → ты −${d} (ярость)`);}else{g[target]={...g[target],hp:cl(g[target].hp-d,0,999)};doEvent(target,d,`🔥 Ярость → ${en(target)} −${d} HP`,'#ff6060');logs.push(`Ты 🔥→${en(target)}: −${d} (−4HP себе)`);}g.you={...g.you,hp:cl(g.you.hp-4,0,g.you.maxHp)};doEvent("you",4,"🔥 Отдача −4 HP",'#ff9040');break;}
-        case"energy":{nob=2;showBanner("⚡ Энергия → +2 ОД на следующий ход",'#e8d090');logs.push("Ты ⚡: +2ОД на след. ход");break;}
+        case"energy":{nob=2;showBanner("⚡ Энергия → +2 ОД на следующий ход",'#e8d090');logs.push("Ты ⚡: +2 ОД на след. ход");break;}
         case"trap":{g.you={...g.you,trap:true};showBanner("🪤 Ловушка установлена",'#e8d090');logs.push("Ты 🪤: Ловушка установлена");break;}
         case"counter":{g.you={...g.you,counter:true};showBanner("↩️ Контрудар готов",'#e8d090');logs.push("Ты ↩️: Контрудар готов");break;}
         case"double":{const d=8;const ot=["e1","e2"].find(k=>k!==target&&g[k].hp>0)??target;if(g[target].hp>0){g[target]={...g[target],hp:cl(g[target].hp-d,0,999)};doEvent(target,d,`⚔⚔ Двойной → ${en(target)} −${d} HP`,'#ff6060');}if(ot!==target&&g[ot].hp>0){g[ot]={...g[ot],hp:cl(g[ot].hp-d,0,999)};doEvent(ot,d,`⚔⚔ Двойной → ${en(ot)} −${d} HP`,'#ff6060');}logs.push(`Ты ⚔️⚔️→${en(target)}+${en(ot)}: −${d} каждому`);break;}
@@ -1365,7 +1365,7 @@ export default function App(){
             const si=rnd(sHand.length);const st=sHand[si];const rest=sHand.filter((_,i)=>i!==si);
             if(target==="e1")localE1h=rest;else localE2h=rest;
             stolenCards.push({uid:nuid(),type:st,flipIn:true});
-            logs.push(`🔍 Шпионаж: украдена ${CARDS[st]?.e??""} ${CARDS[st]?.n??"карта"} у ${en(target)}`);
+            logs.push(`🔍 Шпионаж: украдена карта ${CARDS[st]?.e??""} ${CARDS[st]?.n??""} у ${en(target)}`);
           }else{logs.push(`🔍 Шпионаж: у ${en(target)} нет карт`);}
           break;}
         case"perebor":{
@@ -1581,7 +1581,7 @@ export default function App(){
           display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none",
           background:"rgba(0,0,0,0.65)",animation:"fadeIn 0.15s"}}>
           <div style={{position:"relative",animation:"comboFlash 2.5s cubic-bezier(.15,1.2,.3,1)"}}>
-            <img src={getComboArt(comboGlow)} alt="" style={{width:500,height:330,objectFit:"cover",
+            <img src={getComboArt(comboGlow)} alt="" style={{width:"min(500px,90vw)",height:"auto",aspectRatio:"500/330",objectFit:"cover",
               borderRadius:16,border:"3px solid #e09a3c",
               boxShadow:"0 0 100px rgba(224,154,60,1),0 0 200px rgba(200,80,0,0.5)"}}/>
             <div style={{position:"absolute",inset:0,borderRadius:16,
