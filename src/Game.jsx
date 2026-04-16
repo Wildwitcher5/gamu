@@ -63,6 +63,15 @@ const ART = {
 const SKIP = "[SKIP]";
 const MHP = { you:100, alex:100, e1:100, e2:100 };
 
+/* Russian pluralization: plRu(3,"ход","хода","ходов") → "3 хода" */
+function plRu(n, one, few, many){
+  const a=Math.abs(n)%100, m=a%10;
+  if(a>=11&&a<=19) return `${n} ${many}`;
+  if(m===1)        return `${n} ${one}`;
+  if(m>=2&&m<=4)   return `${n} ${few}`;
+  return `${n} ${many}`;
+}
+
 const CARDS = {
   attack:  {e:"⚔️",  n:"АТАКА",        d:"−8 здоровья врагу",                              c:"#e05252", t:"enemy", od:1},
   double:  {e:"⚔️⚔️",n:"РАССЕЧЕНИЕ",   d:"−8 здоровья двум разным врагам",                 c:"#ff7070", t:"enemy", od:2},
@@ -342,7 +351,7 @@ function DeckStack({count,fatigueCycle}){
   const fpCard=fpCycle(fatigueCycle);
   const layers=count>=12?5:count>=7?3:count>=3?2:count>=1?1:0;
   const W=54,H=76;
-  const tip=`Осталось ${count} карт. Цикл: ${fatigueCycle}. Изнурение: ${fpCard} здоровья за карту`;
+  const tip=`Осталось ${plRu(count,"карта","карты","карт")}. Цикл: ${fatigueCycle}. Изнурение: ${fpCard} здоровья за карту`;
   if(count===0)return(
     <div title={tip} style={{width:W,height:H+22,display:"flex",flexDirection:"column",
       alignItems:"center",justifyContent:"center",gap:4,flexShrink:0}}>
@@ -350,7 +359,7 @@ function DeckStack({count,fatigueCycle}){
         display:"flex",alignItems:"center",justifyContent:"center"}}>
         <span style={{fontSize:9,color:"#2a1808",fontFamily:"Georgia,serif"}}>—</span>
       </div>
-      <div style={{fontSize:10,color:"#3a2808",fontFamily:"Georgia,serif"}}>0 карт</div>
+      <div style={{fontSize:10,color:"#3a2808",fontFamily:"Georgia,serif"}}>{plRu(0,"карта","карты","карт")}</div>
     </div>
   );
   const offset=(layers-1)*3;
@@ -368,7 +377,7 @@ function DeckStack({count,fatigueCycle}){
       ))}
       <div style={{position:"absolute",bottom:0,left:0,right:0,
         textAlign:"center",fontSize:10,color:"#8a7050",fontFamily:"Georgia,serif"}}>
-        {count} карт
+        {plRu(count,"карта","карты","карт")}
       </div>
     </div>
   );
@@ -602,8 +611,8 @@ function EffectBadge({type,stacks,color,bg,border}){
   const [tip,setTip]=useState(false);
   const totalDmg=type==="poison"?stacks*5:stacks*3;
   const tipText=type==="poison"
-    ?`Яд: ещё ${stacks} ход(а) по −5 здоровья\nОсталось −${totalDmg} здоровья суммарно`
-    :`Кровотечение: ещё ${stacks} ход(а) по −3 здоровья\nОсталось −${totalDmg} здоровья суммарно`;
+    ?`Яд: ещё ${plRu(stacks,"ход","хода","ходов")} по −5 здоровья\nОсталось −${totalDmg} здоровья суммарно`
+    :`Кровотечение: ещё ${plRu(stacks,"ход","хода","ходов")} по −3 здоровья\nОсталось −${totalDmg} здоровья суммарно`;
   return(
     <div style={{position:"relative",display:"inline-flex",alignItems:"center",gap:3,
       background:bg,border:`1px solid ${border}`,
