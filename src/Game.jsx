@@ -951,10 +951,7 @@ export default function App(){
   useEffect(()=>{
     if(phase==="player"&&turn===1&&!greetingSentRef.current&&allyPersona){
       greetingSentRef.current=true;
-      const playerNick=localStorage.getItem("nick_self")||"";
-      const hint=playerNick
-        ?`Начало игры. Ты только что начал играть вместе с ${playerNick}. Поздоровайся и спроси как дела или скажи что-нибудь короткое — как живой игрок в онлайн-чате.`
-        :`Начало игры. Поздоровайся с напарником и скажи что-нибудь короткое для начала — как живой игрок в онлайн-чате.`;
+      const hint=`Начало игры. Поздоровайся с напарником — очень коротко, как живой игрок в онлайн-чате. Например: "здарова", "привет", "ну что погнали", "го".`;
       setTimeout(async()=>{
         const text=await llmChat(allyPersona.getSystemPrompt(allyNick),hint,null,[]);
         if(text&&text!==SKIP)addChat("alex",text);
