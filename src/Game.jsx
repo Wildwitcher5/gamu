@@ -182,10 +182,17 @@ const cl=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 // en() is now defined inside App() using e1Nick/e2Nick state
 
 // Subset matching: played cards must contain all needed types (may have extras)
-function detectCombo(played){
-  const types=played.map(p=>p.card.type);
+function detectComboFromTypes(types){
   for(const c of COMBOS){
     const avail=[...types];let match=true;
+    for(const n of c.needs){const i=avail.indexOf(n);if(i===-1){match=false;break;}avail.splice(i,1);}
+    if(match)return c;
+  }
+  return null;
+}
+function detectCombo(played){
+  return detectComboFromTypes(played.map(p=>p.card.type));
+}
     for(const n of c.needs){const i=avail.indexOf(n);if(i===-1){match=false;break;}avail.splice(i,1);}
     if(match)return c;
   }
@@ -1189,6 +1196,26 @@ export default function App(){
       if(nd.length===0){nd=shuffle([...DECK_TEMPLATE]);nc++;}
       return{card,newHand:[...remaining,nd.shift()]};
     };
+    // Strategically prefer a specific card from hand
+    const pickSpecific=(hand,type)=>{
+      const idx=hand.indexOf(type);const remaining=hand.filter((_,i)=>i!==idx);
+      if(nd.length===0){nd=shuffle([...DECK_TEMPLATE]);nc++;}
+      return{card:type,newHand:[...remaining,nd.shift()]};
+    };
+    // 35% chance to pick a smarter card
+    const pickEnemyCard=(hand,actor)=>{
+      if(hand.length<2||Math.random()>=0.35)return pickCard(hand);
+      const tgts=["you","alex"].filter(k=>ng[k]?.hp>0);
+      const tgt=tgts.length?tgts.reduce((a,b)=>ng[a].hp<=ng[b].hp?a:b):null;
+      const selfHp=ng[actor]?.hp??100;
+      const prefer=[];
+      if(tgt&&!ng[tgt].poison&&hand.includes("poison"))prefer.push("poison");
+      if(tgt&&!ng[tgt].bleed&&hand.includes("bleed"))prefer.push("bleed");
+      if(selfHp>65&&hand.includes("rage"))prefer.push("rage");
+      if(tgts.length===2&&hand.includes("double"))prefer.push("double");
+      if(prefer.length)return pickSpecific(hand,prefer[rnd(prefer.length)]);
+      return pickCard(hand);
+    };
 
     // Apply an enemy's card: reuses player card types with enemy-appropriate interpretation
     const applyEnemyCard=(card,actor)=>{
@@ -1271,8 +1298,21 @@ export default function App(){
       if(d>0){ng[tgt]={...ng[tgt],hp:cl(ng[tgt].hp-d,0,ng[tgt].maxHp)};hit(tgt,d);logs.push(`💥 ВРАГИ: Совм. удар → ${tgt==="you"?"тебя":"Союзника"}: −${d}!`);}
       const fdJ=fpCycle(cycleIn);if(fdJ>0){if(ng.e1.hp>0){ng.e1={...ng.e1,hp:cl(ng.e1.hp-fdJ,0,ng.e1.maxHp)};hit("e1",fdJ);logs.push(`${en("e1")} 😓 изнурение: −${fdJ}HP`);}if(ng.e2.hp>0){ng.e2={...ng.e2,hp:cl(ng.e2.hp-fdJ,0,ng.e2.maxHp)};hit("e2",fdJ);logs.push(`${en("e2")} 😓 изнурение: −${fdJ}HP`);}}
     } else {
-      if(ng.e1.hp>0){const r=pickCard(newE1h);e1Card=r.card;newE1h=r.newHand;applyEnemyCard(r.card,"e1");const fd1=fpCycle(cycleIn);if(fd1>0&&ng.e1.hp>0){ng.e1={...ng.e1,hp:cl(ng.e1.hp-fd1,0,ng.e1.maxHp)};hit("e1",fd1);logs.push(`${en("e1")} 😓 изнурение: −${fd1}HP`);}}
-      if(ng.e2.hp>0){const r=pickCard(newE2h);e2Card=r.card;newE2h=r.newHand;applyEnemyCard(r.card,"e2");const fd2=fpCycle(cycleIn);if(fd2>0&&ng.e2.hp>0){ng.e2={...ng.e2,hp:cl(ng.e2.hp-fd2,0,ng.e2.maxHp)};hit("e2",fd2);logs.push(`${en("e2")} 😓 изнурение: −${fd2}HP`);}}
+      if(ng.e1.hp>0){const r=pickEnemyCard(newE1h,"e1");e1Card=r.card;newE1h=r.newHand;applyEnemyCard(r.card,"e1");const fd1=fpCycle(cycleIn);if(fd1>0&&ng.e1.hp>0){ng.e1={...ng.e1,hp:cl(ng.e1.hp-fd1,0,ng.e1.maxHp)};hit("e1",fd1);logs.push(`${en("e1")} 😓 изнурение: −${fd1}HP`);}}
+      if(ng.e2.hp>0){const r=pickEnemyCard(newE2h,"e2");e2Card=r.card;newE2h=r.newHand;applyEnemyCard(r.card,"e2");const fd2=fpCycle(cycleIn);if(fd2>0&&ng.e2.hp>0){ng.e2={...ng.e2,hp:cl(ng.e2.hp-fd2,0,ng.e2.maxHp)};hit("e2",fd2);logs.push(`${en("e2")} 😓 изнурение: −${fd2}HP`);}}
+      // Cross-enemy combo: if both played a combo pair, apply bonus to weakest target
+      if(e1Card&&e2Card){
+        const xc=detectComboFromTypes([e1Card,e2Card]);
+        if(xc){
+          const xt=["you","alex"].filter(k=>ng[k]?.hp>0).reduce((a,b)=>ng[a].hp<=ng[b].hp?a:b,"you");
+          const cb=xc.bonus(ng,xt);
+          if(cb.tgt&&ng[cb.tgt]?.hp>0){
+            if(cb.hp){ng[cb.tgt]={...ng[cb.tgt],hp:cl(ng[cb.tgt].hp-cb.hp,0,ng[cb.tgt].maxHp)};hit(cb.tgt,cb.hp);}
+            if(cb.poison){ng[cb.tgt]={...ng[cb.tgt],poison:(ng[cb.tgt].poison||0)+cb.poison};}
+            logs.push(`⚡ ВРАГИ КОМБО: ${xc.name}! −${cb.hp||0}HP`);
+          }
+        }
+      }
     }
     // Poison + bleed ticks
     for(const k of["you","alex","e1","e2"]){
@@ -1579,6 +1619,7 @@ export default function App(){
   const canEnd=isP&&(played.length>0||!!jointCard);
   const combo=detectCombo(played);
   const comboTypes=combo?played.map(p=>p.card.type):[];
+  const achievableCombos=new Set(COMBOS.filter(c=>{const av=hand.map(x=>x.type);for(const n of c.needs){const i=av.indexOf(n);if(i===-1)return false;av.splice(i,1);}return true;}).map(c=>c.name));
   const previewAlreadySel=preview&&(
     !!played.find(p=>p.card.uid===preview.uid)||
     jointCard?.uid===preview.uid
@@ -1894,24 +1935,30 @@ export default function App(){
           {showComboRef&&(
             <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:4,
               marginBottom:8,scrollbarWidth:"none"}}>
-              {COMBOS.map(c=>(
+              {COMBOS.map(c=>{const can=achievableCombos.has(c.name);return(
                 <div key={c.name} style={{flexShrink:0,width:64,
-                  background:"rgba(0,0,0,0.55)",border:"1px solid rgba(200,154,60,0.35)",
-                  borderRadius:6,overflow:"hidden",display:"flex",flexDirection:"column"}}>
-                  <img src={getComboArt(c.name)} alt="" style={{
-                    width:64,height:58,objectFit:"cover",display:"block"}}/>
+                  background:can?"rgba(200,154,60,0.14)":"rgba(0,0,0,0.55)",
+                  border:can?"1px solid rgba(200,154,60,0.75)":"1px solid rgba(200,154,60,0.2)",
+                  borderRadius:6,overflow:"hidden",display:"flex",flexDirection:"column",
+                  transition:"all 0.2s",opacity:can?1:0.45}}>
+                  <div style={{position:"relative"}}>
+                    <img src={getComboArt(c.name)} alt="" style={{
+                      width:64,height:58,objectFit:"cover",display:"block"}}/>
+                    {can&&<div style={{position:"absolute",top:2,right:2,background:"rgba(200,154,60,0.9)",
+                      borderRadius:3,fontSize:7,padding:"1px 3px",color:"#1a0e00",fontWeight:700}}>✓</div>}
+                  </div>
                   <div style={{padding:"3px 4px 4px",textAlign:"center"}}>
-                    <div style={{fontSize:9,color:"#c8a060",letterSpacing:0.5}}>
+                    <div style={{fontSize:9,color:can?"#e8c070":"#c8a060",letterSpacing:0.5}}>
                       {c.needs.map(t=>CARDS[t]?.e).join("+")}
                     </div>
-                    <div style={{fontSize:7,color:"#8a7050",fontFamily:"Georgia,serif",
+                    <div style={{fontSize:7,color:can?"#a08040":"#8a7050",fontFamily:"Georgia,serif",
                       marginTop:1,lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",
                       display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>
                       {c.name}
                     </div>
                   </div>
                 </div>
-              ))}
+              );})}
             </div>
           )}
           {played.length>0&&(
