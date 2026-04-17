@@ -1023,8 +1023,8 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete 
 
   /* ── Render ─────────────────────────────────────────────────── */
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(6,4,2,0.97)", display: "flex", alignItems: "flex-start", justifyContent: "center", zIndex: 1500, backdropFilter: "blur(8px)", overflowY: "auto", padding: "32px 16px 48px" }}>
-      <div className="survey-inner" style={{ background: "#faf8f4", borderRadius: 12, padding: "44px 48px", width: "100%", maxWidth: 700, color: "#1a1410", fontFamily: "Georgia, serif", boxShadow: "0 24px 80px rgba(0,0,0,0.7)", animation: "scaleIn 0.25s ease", boxSizing: "border-box", marginBottom: 32 }}>
+    <div style={{ position: "fixed", inset: 0, background: isMobile ? "#faf8f4" : "rgba(6,4,2,0.97)", display: "flex", alignItems: "flex-start", justifyContent: "center", zIndex: 1500, backdropFilter: isMobile ? "none" : "blur(8px)", overflowY: "auto", padding: isMobile ? "0" : "32px 16px 48px" }}>
+      <div className="survey-inner" style={{ background: "#faf8f4", borderRadius: isMobile ? 0 : 12, padding: isMobile ? "28px 20px 40px" : "44px 48px", width: "100%", maxWidth: 700, minHeight: isMobile ? "100dvh" : "auto", color: "#1a1410", fontFamily: "Georgia, serif", boxShadow: isMobile ? "none" : "0 24px 80px rgba(0,0,0,0.7)", animation: "scaleIn 0.25s ease", boxSizing: "border-box", marginBottom: isMobile ? 0 : 32 }}>
 
         {/* Progress bar */}
         <div style={{ height: 4, background: "#e8e4de", borderRadius: 2, marginBottom: 6 }}>

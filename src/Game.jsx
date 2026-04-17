@@ -2246,13 +2246,13 @@ export default function App(){
             <div style={{fontSize:12,color:"#6a5030",marginBottom:22,fontFamily:"Georgia,serif"}}>
               Нажми на карту, чтобы отметить её для замены (до 2 карт) — или сразу жми «В бой»
             </div>
-            <div style={{display:"flex",gap:14,justifyContent:"center",marginBottom:18,flexWrap:"wrap"}}>
+            <div style={{display:"flex",gap:isMobile?8:14,justifyContent:"center",marginBottom:18,flexWrap:"wrap"}}>
               {hand.map(card=>{
                 const marked=mulliganMarked.has(card.uid);
                 return(
                   <div key={card.uid} style={{cursor:"pointer",position:"relative",
-                    transform:marked?"translateY(-15px)":"none",transition:"transform 0.2s"}}>
-                    <GameCard card={card} selected={false} dimmed={false}
+                    transform:marked?"translateY(-12px)":"none",transition:"transform 0.2s"}}>
+                    <GameCard card={card} selected={false} dimmed={false} small={isMobile}
                       notEnoughOd={false} jointPending={false} comboWith={false}
                       onPreview={()=>{
                         setMulliganMarked(s=>{const ns=new Set(s);

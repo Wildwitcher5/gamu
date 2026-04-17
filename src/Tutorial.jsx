@@ -236,7 +236,7 @@ export default function Tutorial({ onEnd, allyNick, e1Nick, e2Nick, setActiveTab
       {/* Dark overlay */}
       <div style={{
         position: "fixed", inset: 0, zIndex: 500,
-        background: "rgba(0,0,0,0.75)", pointerEvents: "all",
+        background: "rgba(0,0,0,0.52)", pointerEvents: "all",
       }} onClick={e => e.stopPropagation()} />
 
       {/* Spotlight */}
@@ -249,7 +249,7 @@ export default function Tutorial({ onEnd, allyNick, e1Nick, e2Nick, setActiveTab
           height: targetRect.height + 16,
           zIndex: 501,
           pointerEvents: "none",
-          boxShadow: "0 0 0 9999px rgba(0,0,0,0.75)",
+          boxShadow: "0 0 0 9999px rgba(0,0,0,0.58)",
           borderRadius: 10,
           border: "2px solid rgba(200,160,80,0.65)",
         }} />
