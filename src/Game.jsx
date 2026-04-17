@@ -193,11 +193,6 @@ function detectComboFromTypes(types){
 function detectCombo(played){
   return detectComboFromTypes(played.map(p=>p.card.type));
 }
-    for(const n of c.needs){const i=avail.indexOf(n);if(i===-1){match=false;break;}avail.splice(i,1);}
-    if(match)return c;
-  }
-  return null;
-}
 const initGs=()=>({
   you: {hp:MHP.you, maxHp:MHP.you, poison:0,bleed:0,trap:false,counter:false,jcounter:null},
   alex:{hp:MHP.alex,maxHp:MHP.alex,poison:0,bleed:0},
