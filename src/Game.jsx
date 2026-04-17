@@ -2239,8 +2239,8 @@ export default function App(){
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",display:"flex",
           alignItems:"center",justifyContent:"center",zIndex:99,backdropFilter:"blur(12px)",animation:"fadeIn 0.3s"}}>
           <div style={{background:"linear-gradient(135deg,#0e0a06,#180e04)",
-            border:"1px solid rgba(200,160,80,0.3)",borderRadius:16,padding:"36px 48px",textAlign:"center",
-            boxShadow:"0 0 60px rgba(200,120,20,0.3)",maxWidth:820}}>
+            border:"1px solid rgba(200,160,80,0.3)",borderRadius:16,padding:isMobile?"20px 14px":"36px 48px",textAlign:"center",
+            boxShadow:"0 0 60px rgba(200,120,20,0.3)",maxWidth:820,width:"94%"}}>
             <div style={{fontSize:22,fontWeight:900,letterSpacing:4,fontFamily:"Georgia,serif",
               color:"#c8901c",marginBottom:6}}>СТАРТОВАЯ РУКА</div>
             <div style={{fontSize:12,color:"#6a5030",marginBottom:22,fontFamily:"Georgia,serif"}}>
@@ -2393,7 +2393,7 @@ export default function App(){
         <div style={{position:"fixed",inset:0,background:"rgba(8,5,2,0.97)",display:"flex",
           alignItems:"center",justifyContent:"center",zIndex:2000,backdropFilter:"blur(8px)"}}>
           <div style={{background:"linear-gradient(135deg,#1a1208,#2d1f0a)",border:"2px solid #8b6914",
-            borderRadius:12,padding:"40px",maxWidth:480,width:"90%",textAlign:"center",
+            borderRadius:12,padding:isMobile?"24px 18px":"40px",maxWidth:480,width:"92%",textAlign:"center",
             color:"#e8d5a0",fontFamily:"Georgia,serif",animation:"scaleIn 0.3s cubic-bezier(.15,1.2,.3,1)",
             boxShadow:"0 0 80px rgba(200,140,20,0.3)"}}>
             <div style={{fontSize:22,fontWeight:900,letterSpacing:3,color:"#c8901c",marginBottom:6}}>КАК ТЕБЯ ЗОВУТ?</div>
