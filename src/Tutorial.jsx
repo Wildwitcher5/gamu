@@ -115,13 +115,26 @@ export default function Tutorial({ onEnd, allyNick, e1Nick, e2Nick, setActiveTab
 
   useEffect(() => {
     const s = steps[step];
-    // On mobile, switch to the tab that contains the target element before positioning
     if (isMobile && setActiveTab && s.target && TAB_FOR_TARGET[s.target]) {
       setActiveTab(TAB_FOR_TARGET[s.target]);
     }
-    const timer = setTimeout(updatePositions, 80);
+
+    let cancelled = false;
+    let timer;
+
+    function tryPosition(attempt = 0) {
+      if (cancelled) return;
+      const ok = updatePositions();
+      // If element not found/visible yet, retry up to 10 times with growing delay
+      if (!ok && attempt < 10) {
+        timer = setTimeout(() => tryPosition(attempt + 1), 80 + attempt * 60);
+      }
+    }
+
+    timer = setTimeout(() => tryPosition(0), 80);
     window.addEventListener("resize", updatePositions);
     return () => {
+      cancelled = true;
       clearTimeout(timer);
       window.removeEventListener("resize", updatePositions);
     };
@@ -138,31 +151,20 @@ export default function Tutorial({ onEnd, allyNick, e1Nick, e2Nick, setActiveTab
         setPopupPos({ top: "50%", left: "50%", transform: "translate(-50%, -50%)" });
       }
       setArrowStyle({ display: "none" });
-      return;
+      return true;
     }
     const el = document.querySelector(s.target);
-    if (!el) {
-      setTargetRect(null);
-      setPopupPos({ top: "50%", left: "50%", transform: "translate(-50%, -50%)" });
-      setArrowStyle({ display: "none" });
-      return;
-    }
+    if (!el) return false;
     const rect = el.getBoundingClientRect();
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    // Only spotlight if element is actually visible in the viewport
-    // (on mobile with tabs, some elements may be off-screen or hidden)
     const isVisible = rect.width > 0 && rect.height > 0
       && rect.bottom > 0 && rect.top < vh
       && rect.right > 0 && rect.left < vw;
-    if (!isVisible) {
-      setTargetRect(null);
-      setPopupPos({ top: "50%", left: "50%", transform: "translate(-50%, -50%)" });
-      setArrowStyle({ display: "none" });
-      return;
-    }
+    if (!isVisible) return false;
     setTargetRect({ ...rect.toJSON() });
     placePopup(rect, vw, vh);
+    return true;
   }
 
   function placePopup(rect, vw, vh) {
