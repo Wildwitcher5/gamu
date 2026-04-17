@@ -401,7 +401,7 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete 
 
   /* Skip the ingroup-identification screen for undecided participants (direction === 3) */
   const skipIngId = ans.direction === 3;
-  const TOTAL = isPre ? (skipIngId ? 12 : 13) : (skipIngId ? 11 : 12);
+  const TOTAL = isPre ? (skipIngId ? 14 : 15) : (skipIngId ? 13 : 14);
 
   /*
    * outFirst: do outgroup questions appear BEFORE ingroup questions in each block?
@@ -421,38 +421,44 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete 
   const IDX = isPre
     ? (skipIngId
       ? { welcome:0, dir:1,
-          traitsOut:outFirst?2:6,  traitsIn:outFirst?6:2,
-          affectOut:outFirst?3:7,  affectIn:outFirst?7:3,
-          distOut:  outFirst?4:8,  distIn:  outFirst?8:4,
-          coopOut:  outFirst?5:9,  coopIn:  outFirst?9:5,
-          demo:10, final:11 }
+          blockOutIntro:outFirst?2:7,  blockInIntro:outFirst?7:2,
+          traitsOut:outFirst?3:8,  traitsIn:outFirst?8:3,
+          affectOut:outFirst?4:9,  affectIn:outFirst?9:4,
+          distOut:  outFirst?5:10, distIn:  outFirst?10:5,
+          coopOut:  outFirst?6:11, coopIn:  outFirst?11:6,
+          demo:12, final:13 }
       : { welcome:0, dir:1, ingId:2,
-          traitsOut:outFirst?3:7,  traitsIn:outFirst?7:3,
-          affectOut:outFirst?4:8,  affectIn:outFirst?8:4,
-          distOut:  outFirst?5:9,  distIn:  outFirst?9:5,
-          coopOut:  outFirst?6:10, coopIn:  outFirst?10:6,
-          demo:11, final:12 })
+          blockOutIntro:outFirst?3:8,  blockInIntro:outFirst?8:3,
+          traitsOut:outFirst?4:9,  traitsIn:outFirst?9:4,
+          affectOut:outFirst?5:10, affectIn:outFirst?10:5,
+          distOut:  outFirst?6:11, distIn:  outFirst?11:6,
+          coopOut:  outFirst?7:12, coopIn:  outFirst?12:7,
+          demo:13, final:14 })
     : (skipIngId
       ? { welcome:0,
-          traitsOut:outFirst?1:5,  traitsIn:outFirst?5:1,
-          affectOut:outFirst?2:6,  affectIn:outFirst?6:2,
-          distOut:  outFirst?3:7,  distIn:  outFirst?7:3,
-          coopOut:  outFirst?4:8,  coopIn:  outFirst?8:4,
-          gameQ:9, final:10 }
+          blockOutIntro:outFirst?1:6,  blockInIntro:outFirst?6:1,
+          traitsOut:outFirst?2:7,  traitsIn:outFirst?7:2,
+          affectOut:outFirst?3:8,  affectIn:outFirst?8:3,
+          distOut:  outFirst?4:9,  distIn:  outFirst?9:4,
+          coopOut:  outFirst?5:10, coopIn:  outFirst?10:5,
+          gameQ:11, final:12 }
       : { welcome:0, ingId:1,
-          traitsOut:outFirst?2:6,  traitsIn:outFirst?6:2,
-          affectOut:outFirst?3:7,  affectIn:outFirst?7:3,
-          distOut:  outFirst?4:8,  distIn:  outFirst?8:4,
-          coopOut:  outFirst?5:9,  coopIn:  outFirst?9:5,
-          gameQ:10, final:11 });
+          blockOutIntro:outFirst?2:7,  blockInIntro:outFirst?7:2,
+          traitsOut:outFirst?3:8,  traitsIn:outFirst?8:3,
+          affectOut:outFirst?4:9,  affectIn:outFirst?9:4,
+          distOut:  outFirst?5:10, distIn:  outFirst?10:5,
+          coopOut:  outFirst?6:11, coopIn:  outFirst?11:6,
+          gameQ:12, final:13 });
 
   /* ── Validation ─────────────────────────────────────────────── */
   function isComplete() {
     switch (screen) {
-      case IDX.welcome:   return true;
-      case IDX.dir:       return ans.direction !== null;
-      case IDX.ingId:     return ans.ingroupId.every(v => v !== null);
-      case IDX.traitsOut: return ans.traitsOut.every(v => v !== null);
+      case IDX.welcome:        return true;
+      case IDX.dir:            return ans.direction !== null;
+      case IDX.ingId:          return ans.ingroupId.every(v => v !== null);
+      case IDX.blockOutIntro:  return true;
+      case IDX.blockInIntro:   return true;
+      case IDX.traitsOut:      return ans.traitsOut.every(v => v !== null);
       case IDX.traitsIn:  return ans.traitsIn.every(v => v !== null);
       case IDX.affectOut: return ans.affectOut !== null;
       case IDX.affectIn:  return ans.affectIn !== null;
@@ -745,16 +751,30 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete 
       );
     }
 
+    /* Block intro — outgroup */
+    if (screen === IDX.blockOutIntro) {
+      return (
+        <BodyText>
+          Пожалуйста, ответьте на несколько вопросов о людях, которые считают,
+          что дела в России идут в <strong>{gt.outDir} направлении</strong>.
+        </BodyText>
+      );
+    }
+
+    /* Block intro — ingroup */
+    if (screen === IDX.blockInIntro) {
+      return (
+        <BodyText>
+          Пожалуйста, ответьте на несколько вопросов о людях, которые считают,
+          что дела в России идут в <strong>{gt.inDir} направлении</strong>.
+        </BodyText>
+      );
+    }
+
     /* Block A: Traits — outgroup */
     if (screen === IDX.traitsOut) {
       return (
         <>
-          <div style={{background:"#f0ece4",border:"1px solid #c8bda8",borderRadius:8,
-            padding:"12px 18px",marginBottom:18,fontFamily:"Georgia,serif",fontSize:14,
-            color:"#3a3228",lineHeight:1.7}}>
-            Пожалуйста, ответьте на несколько вопросов о людях, которые считают,
-            что дела в России идут в <strong>{gt.outDir} направлении</strong>.
-          </div>
           <BodyText style={{ marginBottom: 16 }}>
             Ниже приведён список личностных качеств. Как вам кажется, какими
             особенностями обладают люди, считающие, что дела в России идут в{" "}
@@ -775,12 +795,6 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete 
     if (screen === IDX.traitsIn) {
       return (
         <>
-          <div style={{background:"#f0ece4",border:"1px solid #c8bda8",borderRadius:8,
-            padding:"12px 18px",marginBottom:18,fontFamily:"Georgia,serif",fontSize:14,
-            color:"#3a3228",lineHeight:1.7}}>
-            Пожалуйста, ответьте на несколько вопросов о людях, которые считают,
-            что дела в России идут в <strong>{gt.inDir} направлении</strong>.
-          </div>
           <BodyText style={{ marginBottom: 16 }}>
             Ниже приведён список личностных качеств. Как вам кажется, какими
             особенностями обладают люди, считающие, что дела в России идут в{" "}
