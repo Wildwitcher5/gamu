@@ -749,6 +749,12 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete 
     if (screen === IDX.traitsOut) {
       return (
         <>
+          <div style={{background:"#f0ece4",border:"1px solid #c8bda8",borderRadius:8,
+            padding:"12px 18px",marginBottom:18,fontFamily:"Georgia,serif",fontSize:14,
+            color:"#3a3228",lineHeight:1.7}}>
+            Пожалуйста, ответьте на несколько вопросов о людях, которые считают,
+            что дела в России идут в <strong>{gt.outDir} направлении</strong>.
+          </div>
           <BodyText style={{ marginBottom: 16 }}>
             Ниже приведён список личностных качеств. Как вам кажется, какими
             особенностями обладают люди, считающие, что дела в России идут в{" "}
@@ -769,6 +775,12 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete 
     if (screen === IDX.traitsIn) {
       return (
         <>
+          <div style={{background:"#f0ece4",border:"1px solid #c8bda8",borderRadius:8,
+            padding:"12px 18px",marginBottom:18,fontFamily:"Georgia,serif",fontSize:14,
+            color:"#3a3228",lineHeight:1.7}}>
+            Пожалуйста, ответьте на несколько вопросов о людях, которые считают,
+            что дела в России идут в <strong>{gt.inDir} направлении</strong>.
+          </div>
           <BodyText style={{ marginBottom: 16 }}>
             Ниже приведён список личностных качеств. Как вам кажется, какими
             особенностями обладают люди, считающие, что дела в России идут в{" "}
