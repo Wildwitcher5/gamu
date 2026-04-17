@@ -2080,13 +2080,14 @@ export default function App(){
             background:"rgba(200,160,80,0.04)",color:isP&&!animating?"#7a6035":"#2a1808",
             border:"1px solid rgba(200,160,80,0.15)",borderRadius:7,
             padding:"7px 12px",fontSize:9,fontWeight:600,cursor:isP&&!animating?"pointer":"default",
-            fontFamily:"Georgia,serif",letterSpacing:0.5,opacity:isP&&!animating?1:0.4}}>
+            fontFamily:"Georgia,serif",letterSpacing:0.5,opacity:isP&&!animating?1:0.4,
+            minHeight:44}}>
             ВЫЖДАТЬ<br/>+1 ОД
           </button>
           <button onClick={endTurn} disabled={!canEnd||animating} style={{
             background:canEnd&&!animating?(combo?"linear-gradient(135deg,#8a4e00,#e8a020)":"linear-gradient(135deg,#7a3e00,#d4841a)"):"rgba(255,255,255,0.04)",
             color:canEnd&&!animating?"#fff":"#2a1808",border:canEnd&&!animating?"1px solid rgba(220,140,40,0.5)":"none",
-            borderRadius:8,padding:"12px 28px",fontSize:13,fontWeight:900,
+            borderRadius:8,padding:"12px 28px",fontSize:13,fontWeight:900,minHeight:44,
             cursor:canEnd&&!animating?"pointer":animating?"not-allowed":"default",fontFamily:"Georgia,serif",letterSpacing:1,
             boxShadow:combo&&canEnd&&!animating?"0 0 44px rgba(224,154,60,0.9),0 2px 8px rgba(0,0,0,0.5)":canEnd&&!animating?"0 0 28px rgba(210,130,20,0.55),0 2px 8px rgba(0,0,0,0.5)":"none",
             animation:combo&&canEnd&&!animating?"comboPulse 1.4s ease-in-out infinite":undefined,
@@ -2135,8 +2136,8 @@ export default function App(){
           justifyContent:"center",background:"rgba(0,0,0,0.7)",backdropFilter:"blur(6px)",
           animation:"fadeIn 0.3s"}} onClick={()=>{setTradeOffer(null);setTradeSel(null);}}>
           <div style={{background:"linear-gradient(135deg,#0a1a12,#0e2018)",
-            border:"1px solid rgba(76,175,130,0.4)",borderRadius:16,padding:"28px 36px",
-            maxWidth:740,width:"90%",animation:"scaleIn 0.3s cubic-bezier(.15,1.2,.3,1)",
+            border:"1px solid rgba(76,175,130,0.4)",borderRadius:16,padding:isMobile?"16px 14px":"28px 36px",
+            maxWidth:740,width:"94%",maxHeight:"90vh",overflowY:"auto",animation:"scaleIn 0.3s cubic-bezier(.15,1.2,.3,1)",
             boxShadow:"0 0 60px rgba(76,175,130,0.2)"}} onClick={e=>e.stopPropagation()}>
             <div style={{fontSize:15,fontWeight:900,letterSpacing:3,color:"#4caf82",
               fontFamily:"Georgia,serif",textAlign:"center",marginBottom:20}}>ОБМЕН КАРТАМИ</div>
@@ -2464,7 +2465,7 @@ export default function App(){
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.9)",display:"flex",
           alignItems:"center",justifyContent:"center",zIndex:99,backdropFilter:"blur(12px)",animation:"fadeIn 0.3s"}}>
           <div style={{background:"linear-gradient(135deg,#0e0a06,#180e04)",
-            border:"1px solid rgba(200,160,80,0.3)",borderRadius:16,padding:"50px 60px",textAlign:"center",
+            border:"1px solid rgba(200,160,80,0.3)",borderRadius:16,padding:isMobile?"28px 20px":"50px 60px",textAlign:"center",
             boxShadow:"0 0 60px rgba(200,120,20,0.3)"}}>
             <div style={{fontSize:26,fontWeight:900,letterSpacing:4,fontFamily:"Georgia,serif",
               color:winner==="player"?"#4caf82":"#e05252",marginBottom:12,
