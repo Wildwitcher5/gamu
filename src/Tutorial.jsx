@@ -132,7 +132,11 @@ export default function Tutorial({ onEnd, allyNick, e1Nick, e2Nick, setActiveTab
     const s = steps[step];
     if (!s.target) {
       setTargetRect(null);
-      setPopupPos({ top: "50%", left: "50%", transform: "translate(-50%, -50%)" });
+      if (isMobile) {
+        setPopupPos({ bottom: "72px", left: "12px", top: "auto", transform: "none" });
+      } else {
+        setPopupPos({ top: "50%", left: "50%", transform: "translate(-50%, -50%)" });
+      }
       setArrowStyle({ display: "none" });
       return;
     }

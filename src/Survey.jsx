@@ -210,6 +210,37 @@ function RadioOption({ label, checked, onChange }) {
 
 /* Matrix: column headers + item rows sharing one scale */
 function SurveyMatrix({ items, scale, values, onChange, uid }) {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 600);
+  useEffect(() => {
+    const fn = () => setIsMobile(window.innerWidth < 600);
+    window.addEventListener("resize", fn);
+    return () => window.removeEventListener("resize", fn);
+  }, []);
+
+  if (isMobile) {
+    return (
+      <div>
+        {items.map((item, ri) => (
+          <div key={ri} style={{ borderTop: "1px solid #eeece8", padding: "14px 0" }}>
+            <div style={{ fontSize: 13.5, color: "#2a2520", lineHeight: 1.6, fontFamily: "Georgia, serif", marginBottom: 12 }}>
+              {item}
+            </div>
+            <div style={{ display: "flex" }}>
+              {scale.map((lbl, ci) => (
+                <label key={ci} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 5, cursor: "pointer" }}>
+                  <input type="radio" name={`${uid}_r${ri}`} checked={values[ri] === ci + 1}
+                    onChange={() => onChange(ri, ci + 1)}
+                    style={{ accentColor: "#2d5a8c", width: 22, height: 22, cursor: "pointer" }} />
+                  <span style={{ fontSize: 8, color: "#999", textAlign: "center", lineHeight: 1.2, whiteSpace: "pre-line" }}>{lbl}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="survey-matrix">
       <div className="survey-matrix-header">
@@ -227,13 +258,9 @@ function SurveyMatrix({ items, scale, values, onChange, uid }) {
           <div style={{ flex: 1, display: "flex" }}>
             {scale.map((_, ci) => (
               <label key={ci} style={{ flex: 1, display: "flex", justifyContent: "center", cursor: "pointer" }}>
-                <input
-                  type="radio"
-                  name={`${uid}_r${ri}`}
-                  checked={values[ri] === ci + 1}
+                <input type="radio" name={`${uid}_r${ri}`} checked={values[ri] === ci + 1}
                   onChange={() => onChange(ri, ci + 1)}
-                  style={{ accentColor: "#2d5a8c", width: 18, height: 18, cursor: "pointer" }}
-                />
+                  style={{ accentColor: "#2d5a8c", width: 18, height: 18, cursor: "pointer" }} />
               </label>
             ))}
           </div>
@@ -267,25 +294,39 @@ function RadioScale({ scale, value, onChange, name }) {
 
 /* Semantic differential: left label — radio dots — right label */
 function SemanticDiff({ leftLabel, rightLabel, n, value, onChange, name }) {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 600);
+  useEffect(() => {
+    const fn = () => setIsMobile(window.innerWidth < 600);
+    window.addEventListener("resize", fn);
+    return () => window.removeEventListener("resize", fn);
+  }, []);
+
+  const dots = Array.from({ length: n }, (_, i) => (
+    <label key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 5, cursor: "pointer" }}>
+      <input type="radio" name={name} checked={value === i + 1} onChange={() => onChange(i + 1)}
+        style={{ accentColor: "#2d5a8c", width: isMobile ? 22 : 18, height: isMobile ? 22 : 18, cursor: "pointer" }} />
+      <span style={{ fontSize: 11, color: "#bbb" }}>{i + 1}</span>
+    </label>
+  ));
+
+  if (isMobile) {
+    return (
+      <div style={{ margin: "12px 0 4px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginBottom: 10 }}>
+          <span style={{ fontSize: 12, color: "#3a3228", fontStyle: "italic", lineHeight: 1.4, fontFamily: "Georgia, serif", flex: 1 }}>← {leftLabel}</span>
+          <span style={{ fontSize: 12, color: "#3a3228", fontStyle: "italic", lineHeight: 1.4, fontFamily: "Georgia, serif", flex: 1, textAlign: "right" }}>{rightLabel} →</span>
+        </div>
+        <div style={{ display: "flex" }}>{dots}</div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: "center", margin: "12px 0 4px", width: "100%" }}>
       <div style={{ fontSize: 12, color: "#3a3228", lineHeight: 1.45, textAlign: "right", flex: "1 1 0", minWidth: 0, fontFamily: "Georgia, serif", fontStyle: "italic" }}>
         {leftLabel}
       </div>
-      <div style={{ display: "flex", alignItems: "flex-end", gap: 10, flexShrink: 0 }}>
-        {Array.from({ length: n }, (_, i) => (
-          <label key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, cursor: "pointer" }}>
-            <input
-              type="radio"
-              name={name}
-              checked={value === i + 1}
-              onChange={() => onChange(i + 1)}
-              style={{ accentColor: "#2d5a8c", width: 18, height: 18, cursor: "pointer" }}
-            />
-            <span style={{ fontSize: 11, color: "#bbb" }}>{i + 1}</span>
-          </label>
-        ))}
-      </div>
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 10, flexShrink: 0 }}>{dots}</div>
       <div style={{ fontSize: 12, color: "#3a3228", lineHeight: 1.45, textAlign: "left", flex: "1 1 0", minWidth: 0, fontFamily: "Georgia, serif", fontStyle: "italic" }}>
         {rightLabel}
       </div>
