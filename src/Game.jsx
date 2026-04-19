@@ -2381,11 +2381,14 @@ export default function App(){
         setE2Nick(e2n);
         localStorage.setItem("e1_nick", e1n);
         localStorage.setItem("e2_nick", e2n);
-        /* stamp condition + avatars + nicks into the session record (nick_self/avatar_self added after setup) */
-        const session = getCurrentSession();
-        if(session){
-          const updated = {...session, condition:cond, ally_nick:nick, e1_nick:e1n, e2_nick:e2n, ...avatars};
+        /* stamp condition + avatars + nicks into the session record (nick_self/avatar_self added after setup).
+           Fall back to React-state survey1Session if localStorage got wiped mid-flow. */
+        const stored = getCurrentSession();
+        const base = (stored && stored.session_id) ? stored : (data.session || null);
+        if(base){
+          const updated = {...base, condition:cond, ally_nick:nick, e1_nick:e1n, e2_nick:e2n, ...avatars};
           saveCurrentSession(updated);
+          setSurvey1Session(updated);
           upsertResponse(updated);
         }
         /* show setup screen (nickname + avatar) before revealing partner info */
@@ -2446,11 +2449,14 @@ export default function App(){
                 localStorage.setItem("playerName",name);
                 if(avatar) localStorage.setItem("player_avatar",avatar);
                 setPlayerName(name);setPlayerAvatar(avatar);setShowSetup(false);
-                /* stamp nick_self + avatar_self now that setup is complete */
-                const session=getCurrentSession();
-                if(session){
-                  const updated={...session,nick_self:name,avatar_self:avatar};
+                /* stamp nick_self + avatar_self now that setup is complete.
+                   Fall back to survey1Session state if localStorage was wiped. */
+                const stored=getCurrentSession();
+                const base=(stored&&stored.session_id)?stored:(survey1Session||null);
+                if(base){
+                  const updated={...base,nick_self:name,avatar_self:avatar};
                   saveCurrentSession(updated);
+                  setSurvey1Session(updated);
                   upsertResponse(updated);
                 }
                 setShowCondBrief(true);

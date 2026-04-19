@@ -75,23 +75,62 @@ const INCOME_OPTS = [
 
 /* ════════════════════════ STORAGE UTILS ════════════════════════════════ */
 function generateUUID() {
+  // Prefer crypto.randomUUID() when available (cryptographically unique, no Math.random collision risk).
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    try { return crypto.randomUUID(); } catch {}
+  }
+  if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
+    const b = new Uint8Array(16);
+    crypto.getRandomValues(b);
+    b[6] = (b[6] & 0x0f) | 0x40;
+    b[8] = (b[8] & 0x3f) | 0x80;
+    const h = [...b].map(x => x.toString(16).padStart(2, "0")).join("");
+    return `${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}`;
+  }
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
     const r = (Math.random() * 16) | 0;
     return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
   });
 }
 
-/* upsertResponse: localStorage write removed — data now goes to the server.
- * Kept as a no-op export so callers in Game.jsx don't need to change. */
-// eslint-disable-next-line no-unused-vars
-export function upsertResponse(_session) {}
+/* upsertResponse: push current session snapshot to the server as a partial save.
+ * Used for mid-flow writes (condition stamp, nick/avatar stamp, game-over metadata)
+ * so data survives even if the user closes the tab before the post-survey.
+ * Fire-and-forget with one in-flight retry to avoid spamming the endpoint. */
+const _pendingPost = {};
+export function upsertResponse(session) {
+  if (!session || !session.session_id) return;
+  const sid = session.session_id;
+  // Always send status='incomplete' from mid-flow — the post-survey will upgrade to 'complete'.
+  // Server-side guard (see api/save-response.js) prevents downgrading a completed row.
+  const body = JSON.stringify({ session_id: sid, status: "incomplete", data: session });
+  const attempt = async (tries) => {
+    try {
+      const r = await fetch("/api/save-response", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+        keepalive: true, // survive tab close during pagehide/unload
+      });
+      if (!r.ok && tries > 0) {
+        setTimeout(() => attempt(tries - 1), 800);
+      }
+    } catch {
+      if (tries > 0) setTimeout(() => attempt(tries - 1), 800);
+    }
+  };
+  // De-dupe: if a call for this session is already in flight, skip
+  if (_pendingPost[sid]) return;
+  _pendingPost[sid] = true;
+  attempt(2).finally(() => { delete _pendingPost[sid]; });
+}
 
 export function saveCurrentSession(data) {
-  try { localStorage.setItem(SESSION_KEY, JSON.stringify(data)); } catch(e) { console.error(e); }
+  try { localStorage.setItem(SESSION_KEY, JSON.stringify(data)); } catch(e) { console.error("saveCurrentSession failed:", e); }
 }
 
 export function getCurrentSession() {
-  try { return JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); } catch { return null; }
+  try { return JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); } catch(e) { console.error("getCurrentSession failed:", e); return null; }
 }
 
 /* ════════════════════════ INDEX COMPUTATION ════════════════════════════ */
@@ -614,16 +653,31 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete,
       session = { ...session, session_id: sid, _orphan: true };
       try { saveCurrentSession(session); } catch {}
     }
-    const r = await fetch('/api/save-response', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        session_id: sid,
-        status:     isComplete ? 'complete' : 'incomplete',
-        data:       session,
-      }),
+    const body = JSON.stringify({
+      session_id: sid,
+      status:     isComplete ? 'complete' : 'incomplete',
+      data:       session,
     });
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    // Retry with exponential backoff — network hiccups and cold-start 5xx must not
+    // silently lose data. 3 attempts total: 0ms, 600ms, 1600ms.
+    let lastErr;
+    for (let i = 0; i < 3; i++) {
+      if (i > 0) await new Promise(r => setTimeout(r, 400 * i * i + 200));
+      try {
+        const r = await fetch('/api/save-response', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body,
+          keepalive: true,
+        });
+        if (r.ok) return;
+        lastErr = new Error(`HTTP ${r.status}`);
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+    console.error('postToServer failed after 3 attempts:', lastErr);
+    throw lastErr || new Error('Network error');
   }
 
   /* ── Navigation ─────────────────────────────────────────────── */
@@ -692,6 +746,12 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete,
           <BodyText style={{ textAlign: "center" }}>
             Вы уже участвовали в нашем исследовании.
           </BodyText>
+          <button
+            onClick={() => setCookieScreen(null)}
+            style={{ marginTop: 22, background: "transparent", color: "#8a8278", border: "1px solid #d6d0c6", borderRadius: 6, padding: "8px 16px", fontSize: 12, cursor: "pointer", fontFamily: "Georgia, serif" }}
+          >
+            Нажал(а) по ошибке — пройти всё равно
+          </button>
         </div>
       </div>
     );
