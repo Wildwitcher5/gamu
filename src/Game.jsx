@@ -858,6 +858,10 @@ export default function App(){
   const [showSurvey2,setShowSurvey2]=useState(false);
   const [survey1Data,setSurvey1Data]=useState(null);
   const [survey2Data,setSurvey2Data]=useState(null);
+  // Hold the full pre-survey session object in React state as a backup source of session_id.
+  // Protects against localStorage being wiped between pre- and post-survey (iOS private mode,
+  // killed background tab). Post-survey reads priorSession from this state.
+  const [survey1Session,setSurvey1Session]=useState(null);
   const [blockOrder]=useState(()=>{
     const saved=localStorage.getItem("block_order");
     if(saved==="approve_first"||saved==="disapprove_first")return saved;
@@ -896,13 +900,16 @@ export default function App(){
   useEffect(()=>{logEnd.current?.scrollIntoView({behavior:"smooth"});},[log]);
   // Keep ref to latest skipTurn to avoid stale closure in auto-skip effect
   useEffect(()=>{skipTurnRef.current=skipTurn;});
-  // Save ts_game_end, outcome, turns, chat count when game ends
+  // Save ts_game_end, outcome, turns, chat count when game ends.
+  // Fall back to React-state session if localStorage was wiped mid-game (iOS private
+  // mode etc), so game metadata still makes it into the post-survey save.
   useEffect(()=>{
     if(phase==="over"){
-      const session=getCurrentSession();
-      if(session){
+      const stored=getCurrentSession();
+      const base=(stored&&stored.session_id)?stored:(survey1Session||stored||null);
+      if(base){
         const updated={
-          ...session,
+          ...base,
           ts_game_end:new Date().toISOString(),
           game_outcome:winner??"unknown",
           game_turns:turn,
@@ -911,6 +918,7 @@ export default function App(){
           cooperation_score:cooperationScore,
         };
         saveCurrentSession(updated);
+        setSurvey1Session(updated);
         upsertResponse(updated);
       }
     }
@@ -2352,6 +2360,7 @@ export default function App(){
       {/* Pre-game survey — shown first, before setup screen */}
       {showSurvey1&&<Survey type="pre" blockOrder={blockOrder} onComplete={data=>{
         setSurvey1Data(data);
+        if(data.session)setSurvey1Session(data.session);
         setShowSurvey1(false);
         const cond = assignCondition();
         const avatars = assignAvatars(cond, data.ingroup);
@@ -2384,7 +2393,7 @@ export default function App(){
       }}/>}
 
       {/* Post-game survey — shown after game ends, above game-over screen */}
-      {showSurvey2&&<Survey type="post" blockOrder={blockOrder} onComplete={data=>{setSurvey2Data(data);setShowSurvey2(false);}}/>}
+      {showSurvey2&&<Survey type="post" blockOrder={blockOrder} priorSession={survey1Session} onComplete={data=>{setSurvey2Data(data);setShowSurvey2(false);}}/>}
 
       {/* Export: /api/export-csv?secret=YOUR_SECRET (server-side) */}
 

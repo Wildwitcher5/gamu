@@ -383,7 +383,7 @@ function BipolarMatrix({ items, values, onChange, uid }) {
     10 gameQ
     11 final
 */
-export default function Survey({ type, blockOrder = "approve_first", onComplete }) {
+export default function Survey({ type, blockOrder = "approve_first", onComplete, priorSession = null }) {
   const isPre = type === "pre";
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   useEffect(() => {
@@ -422,16 +422,28 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete 
   };
   });
 
-  /* Init session on Survey1 mount */
+  /* Init session on Survey mount.
+     Pre: create a fresh session_id (unless localStorage still has one from a resumed session).
+     Post: seed localStorage from priorSession prop so getCurrentSession() works even if
+     localStorage was wiped between pre and post (iOS private mode, killed background tab, etc). */
   useEffect(() => {
-    if (!isPre) return;
-    const session = {
-      session_id: generateUUID(),
-      status: "started",
-      ts_s1_start: new Date().toISOString(),
-    };
-    saveCurrentSession(session);
-    upsertResponse(session);
+    if (isPre) {
+      const existing = getCurrentSession();
+      if (existing && existing.session_id) return; // already initialized (don't overwrite)
+      const session = {
+        session_id: generateUUID(),
+        status: "started",
+        ts_s1_start: new Date().toISOString(),
+      };
+      saveCurrentSession(session);
+      upsertResponse(session);
+    } else {
+      // Post-survey: make sure localStorage has the session_id from the pre-survey
+      const existing = getCurrentSession();
+      if (priorSession && priorSession.session_id && (!existing || !existing.session_id)) {
+        saveCurrentSession(priorSession);
+      }
+    }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function setVal(key, val) { setAns(a => ({ ...a, [key]: val })); }
@@ -550,7 +562,10 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete 
   }
 
   function saveS2() {
-    const current = getCurrentSession() || {};
+    // Prefer localStorage, but fall back to priorSession prop if localStorage was wiped
+    // (iOS private mode, killed background tab). Ensures session_id survives.
+    const stored = getCurrentSession();
+    const current = (stored && stored.session_id) ? stored : (priorSession || stored || {});
     const s2idx = computeIndices("s2",
       ans.traitsOut, ans.traitsIn, ans.affectOut, ans.affectIn,
       ans.distOut,   ans.distIn,   ans.coopOut,   ans.coopIn);
@@ -590,11 +605,20 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete 
   /* ── Server POST helper ──────────────────────────────────────── */
   async function postToServer(session) {
     const isComplete = !isPre;
+    // Defensive: if session_id somehow disappeared (localStorage wiped, React state lost),
+    // generate a fresh one so the record still saves. Orphan records can be linked later
+    // by timestamp/IP but at least no data is silently dropped.
+    let sid = session.session_id;
+    if (!sid) {
+      sid = generateUUID();
+      session = { ...session, session_id: sid, _orphan: true };
+      try { saveCurrentSession(session); } catch {}
+    }
     const r = await fetch('/api/save-response', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        session_id: session.session_id,
+        session_id: sid,
         status:     isComplete ? 'complete' : 'incomplete',
         data:       session,
       }),
@@ -615,12 +639,12 @@ export default function Survey({ type, blockOrder = "approve_first", onComplete 
       if (isPre) {
         const session = saveS1();
         await postToServer(session);
-        onComplete({ direction: ans.direction, ingroup });
+        onComplete({ direction: ans.direction, ingroup, session });
       } else {
         const session = saveS2();
         await postToServer(session);
         setCookie("pol_study_done", "1", 365);
-        onComplete({ direction: ans.direction, ingroup });
+        onComplete({ direction: ans.direction, ingroup, session });
       }
     } catch {
       setSubmitError('Не удалось сохранить данные. Проверьте соединение и попробуйте ещё раз.');
