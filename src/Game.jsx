@@ -759,7 +759,7 @@ function MatchmakingScreen({onReady}){
   const [found,setFound]=useState(false);
   const [tick,setTick]=useState(0);
   useEffect(()=>{
-    const delay=10000+Math.floor(Math.random()*20001); // 10–30 s
+    const delay=2000+Math.floor(Math.random()*6001); // 2–8 s
     const t1=setTimeout(()=>setFound(true),delay);
     const t2=setTimeout(()=>onReady(),delay+1800);
     const ti=setInterval(()=>setTick(n=>n+1),500);
@@ -1351,7 +1351,7 @@ export default function App(){
     {const fd=fpCycle(capCycle);if(fd>0&&g.alex.hp>0){g.alex={...g.alex,hp:cl(g.alex.hp-fd,0,g.alex.maxHp)};doEvent("alex",fd,`😓 Изнурение → Союзник −${fd} HP`,'#ff9040');logs.push(`Союзник 😓 изнурение: −${fd}HP`);}}
     const prevHpSk={you:g.you.hp,alex:g.alex.hp,e1:g.e1.hp,e2:g.e2.hp};
     setThinking({e1:g.e1.hp>0,e2:g.e2.hp>0,alex:false});
-    await dly(1000+rnd(9000));
+    await dly(500+rnd(4500));
     setThinking({e1:false,e2:false,alex:false});
     const{ng,hits:eh,e1Card,e2Card,newE1h,newE2h,deck:eDeck,cycle:eCycle}=enemyAct(g,logs,turn,e1Hand,e2Hand,capDeck,capCycle);
     capDeck=eDeck;capCycle=eCycle;
@@ -1484,7 +1484,7 @@ export default function App(){
     {const fd=fpCycle(capturedCycle);if(fd>0&&g.alex.hp>0){g.alex={...g.alex,hp:cl(g.alex.hp-fd,0,g.alex.maxHp)};doEvent("alex",fd,`😓 Изнурение → Союзник −${fd} HP`,'#ff9040');logs.push(`Союзник 😓 изнурение: −${fd}HP`);}}
     const prevHp={you:g.you.hp,alex:g.alex.hp,e1:g.e1.hp,e2:g.e2.hp};
     setThinking({e1:g.e1.hp>0,e2:g.e2.hp>0,alex:false});
-    await dly(1000+rnd(9000));
+    await dly(500+rnd(4500));
     setThinking({e1:false,e2:false,alex:false});
     const{ng,hits:eh,e1Card,e2Card,newE1h,newE2h,deck:eDeck,cycle:eCycle}=enemyAct(g,logs,turn,localE1h,localE2h,capturedDeck,capturedCycle);
     capturedDeck=eDeck;capturedCycle=eCycle;
